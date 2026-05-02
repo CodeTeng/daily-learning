@@ -1,7 +1,5 @@
-package com.example.demo.controller;
+package com.example.demo.async;
 
-import com.example.demo.model.User;
-import com.example.demo.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PostMapping;

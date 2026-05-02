@@ -1,7 +1,5 @@
-package com.example.demo.service;
+package com.example.demo.async;
 
-import com.example.demo.model.User;
-import com.example.demo.util.TimedAsync;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
