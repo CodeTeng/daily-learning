@@ -37,3 +37,6 @@ build/
 
 ### Firecrawl scratch files ###
 .firecrawl/
+
+### Stray class files (root dir) ###
+*.class
