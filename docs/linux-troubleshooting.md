@@ -464,38 +464,42 @@ mtr target                                       # 看哪一跳丢
 
 ## 四、命令速查表（按场景查）
 
-| 场景 | 一行命令 |
-|---|---|
-| 系统总体快速看一眼 | `uptime; free -h; df -h; ss -s` |
-| 找最耗 CPU 的进程 | `top -o %CPU` |
-| 找最耗内存的进程 | `top -o %MEM` 或 `ps aux --sort=-%mem \| head` |
-| Java 找高 CPU 线程栈 | `top -H -p <pid>` → `printf '%x\n' <tid>` → `jstack <pid> \| grep -A20 'nid=0x<hex>'` |
-| 看磁盘哪满了 | `du -h --max-depth=1 / \| sort -h` 或 `ncdu /` |
-| 找已删除但被持有的大文件 | `lsof \| grep deleted \| sort -k7 -rh \| head` |
-| 看 IO 瓶颈 | `iostat -xz 1` 看 `%util` 和 `await` |
-| 看网络连接状态分布 | `ss -ant \| awk '{print $1}' \| sort \| uniq -c` |
-| 看哪个进程在跑流量 | `nethogs` |
-| 拆解 HTTP 请求各阶段耗时 | `curl -v -o /dev/null -w "%{time_namelookup} %{time_connect} %{time_appconnect} %{time_starttransfer} %{time_total}\n" URL` |
-| 链路丢包排查 | `mtr -rwzbc 100 host` |
-| 看 OOM Killer 杀过谁 | `dmesg -T \| grep -i "killed process"` |
-| 看进程系统调用 | `strace -tt -p <pid>` 或 `strace -c -p <pid>` 30s 后 Ctrl-C |
-| D 状态进程内核栈 | `cat /proc/<pid>/stack` |
-| 进程 fd 数和上限 | `ls /proc/<pid>/fd \| wc -l; cat /proc/<pid>/limits` |
-| 端口被谁占了 | `lsof -i :<port>` 或 `ss -tlnp \| grep <port>` |
-| 测端口连通性 | `nc -zv host port` |
+
+| 场景               | 一行命令                                                                                                                        |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 系统总体快速看一眼        | `uptime; free -h; df -h; ss -s`                                                                                             |
+| 找最耗 CPU 的进程      | `top -o %CPU`                                                                                                               |
+| 找最耗内存的进程         | `top -o %MEM` 或 `ps aux --sort=-%mem | head`                                                                                |
+| Java 找高 CPU 线程栈  | `top -H -p <pid>` → `printf '%x\n' <tid>` → `jstack <pid> | grep -A20 'nid=0x<hex>'`                                        |
+| 看磁盘哪满了           | `du -h --max-depth=1 / | sort -h` 或 `ncdu /`                                                                                |
+| 找已删除但被持有的大文件     | `lsof | grep deleted | sort -k7 -rh | head`                                                                                 |
+| 看 IO 瓶颈          | `iostat -xz 1` 看 `%util` 和 `await`                                                                                          |
+| 看网络连接状态分布        | `ss -ant | awk '{print $1}' | sort | uniq -c`                                                                               |
+| 看哪个进程在跑流量        | `nethogs`                                                                                                                   |
+| 拆解 HTTP 请求各阶段耗时  | `curl -v -o /dev/null -w "%{time_namelookup} %{time_connect} %{time_appconnect} %{time_starttransfer} %{time_total}\n" URL` |
+| 链路丢包排查           | `mtr -rwzbc 100 host`                                                                                                       |
+| 看 OOM Killer 杀过谁 | `dmesg -T | grep -i "killed process"`                                                                                       |
+| 看进程系统调用          | `strace -tt -p <pid>` 或 `strace -c -p <pid>` 30s 后 Ctrl-C                                                                   |
+| D 状态进程内核栈        | `cat /proc/<pid>/stack`                                                                                                     |
+| 进程 fd 数和上限       | `ls /proc/<pid>/fd | wc -l; cat /proc/<pid>/limits`                                                                         |
+| 端口被谁占了           | `lsof -i :<port>` 或 `ss -tlnp | grep <port>`                                                                                |
+| 测端口连通性           | `nc -zv host port`                                                                                                          |
+
 
 ---
 
 ## 五、进阶 / Java 专用工具
 
-| 工具 | 用途 |
-|---|---|
-| `arthas`（阿里开源） | 在线 attach Java 进程，看方法调用栈/参数/返回值，trace 一行命令搞定 |
-| `async-profiler` | 火焰图神器，CPU + 内存分配 + lock，几乎零开销 |
+
+| 工具                       | 用途                                                     |
+| ------------------------ | ------------------------------------------------------ |
+| `arthas`（阿里开源）           | 在线 attach Java 进程，看方法调用栈/参数/返回值，trace 一行命令搞定           |
+| `async-profiler`         | 火焰图神器，CPU + 内存分配 + lock，几乎零开销                          |
 | `bcc-tools` / `bpftrace` | 现代内核排查瑞士军刀（基于 eBPF），看 syscall/blockio/tcpconnect 不影响生产 |
-| `perf` | Linux 内置，火焰图原始数据来源 |
-| `wrk` / `ab` / `vegeta` | 压测工具，复现性能问题 |
-| `tcpkill` | 强制断开某条 TCP 连接（应急隔离故障客户端） |
+| `perf`                   | Linux 内置，火焰图原始数据来源                                     |
+| `wrk` / `ab` / `vegeta`  | 压测工具，复现性能问题                                            |
+| `tcpkill`                | 强制断开某条 TCP 连接（应急隔离故障客户端）                               |
+
 
 ---
 
@@ -549,3 +553,4 @@ for i in {1..10000}; do curl -s http://baidu.com > /dev/null; done
 - [Brendan Gregg — USE Method](https://www.brendangregg.com/usemethod.html)
 - [Linux Performance Analysis in 60 seconds (Netflix Tech Blog)](https://netflixtechblog.com/linux-performance-analysis-in-60-000-milliseconds-accc10403c55)
 - [TCP/IP 详解卷一](https://book.douban.com/subject/1088054/) — TCP 状态机和异常的根本来源
+
