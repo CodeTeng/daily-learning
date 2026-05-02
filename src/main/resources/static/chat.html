@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket 长连复用 Demo</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            background: #1e1e2e; color: #cdd6f4; margin: 0; padding: 24px; min-height: 100vh;
+        }
+        .container { max-width: 760px; margin: 0 auto; }
+        h1 { font-size: 18px; margin: 0 0 4px; display: flex; align-items: center; gap: 12px; }
+        .sub { color: #6c7086; font-size: 12px; margin-bottom: 16px; }
+        #status {
+            display: inline-block; padding: 3px 10px; border-radius: 4px;
+            font-size: 12px; font-weight: 600;
+        }
+        .ok { background: #a6e3a1; color: #1e1e2e; }
+        .bad { background: #f38ba8; color: #1e1e2e; }
+        #log {
+            background: #181825; padding: 14px; height: 420px; overflow-y: auto;
+            border-radius: 8px; font-size: 13px; line-height: 1.65;
+            font-family: ui-monospace, "SF Mono", Menlo, monospace;
+            border: 1px solid #313244;
+        }
+        .msg { margin-bottom: 4px; word-break: break-word; }
+        .system { color: #f9e2af; }
+        .push   { color: #89b4fa; }
+        .me     { color: #a6e3a1; }
+        .info   { color: #6c7086; font-style: italic; }
+        .row {
+            margin-top: 12px; display: flex; gap: 8px; align-items: center;
+        }
+        input, button {
+            font-size: 14px; padding: 9px 14px; border-radius: 6px;
+            border: 1px solid #45475a; background: #313244; color: #cdd6f4;
+        }
+        .row input { flex: 1; }
+        button {
+            background: #89b4fa; color: #1e1e2e; cursor: pointer;
+            border: none; font-weight: 600;
+        }
+        button:hover { background: #b4befe; }
+        .stats {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+            margin-top: 16px;
+        }
+        .stat-card {
+            background: #181825; border: 1px solid #313244;
+            padding: 12px; border-radius: 6px; text-align: center;
+        }
+        .stat-card .num { font-size: 22px; font-weight: 700; color: #89b4fa; }
+        .stat-card .label { font-size: 11px; color: #6c7086; margin-top: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>WS 长连复用 Demo <span id="status" class="bad">未连接</span></h1>
+    <div class="sub">提示：多开几个浏览器窗口打开本页，即可看到群聊效果；服务端每 10s 会主动 push 一次时间</div>
+
+    <div id="log"></div>
+
+    <div class="row">
+        <input id="input" type="text" placeholder="输入消息后回车发送…" autofocus>
+        <button onclick="send()">发送</button>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="num" id="connCount">0</div>
+            <div class="label">WS 握手次数<br/>(理想是 1)</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" id="sentCount">0</div>
+            <div class="label">本端发送 frame 数</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" id="recvCount">0</div>
+            <div class="label">本端接收 frame 数</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let ws;
+    let sentCount = 0, recvCount = 0, connCount = 0;
+    const log    = document.getElementById('log');
+    const status = document.getElementById('status');
+    const input  = document.getElementById('input');
+
+    function append(text, cls) {
+        const div = document.createElement('div');
+        div.className = 'msg ' + (cls || '');
+        const ts = new Date().toLocaleTimeString();
+        div.textContent = `[${ts}] ${text}`;
+        log.appendChild(div);
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function connect() {
+        const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        ws = new WebSocket(`${proto}://${location.host}/ws/chat`);
+
+        ws.onopen = () => {
+            connCount++;
+            document.getElementById('connCount').textContent = connCount;
+            status.textContent = '已连接 (TCP 长连)';
+            status.className = 'ok';
+            append('--- WS 长连接已建立（HTTP Upgrade -> 101 Switching Protocols 完成） ---', 'info');
+            append('--- 后续所有消息都走这一根 TCP，没有任何 HTTP/TCP 握手开销 ---', 'info');
+        };
+
+        ws.onmessage = (e) => {
+            recvCount++;
+            document.getElementById('recvCount').textContent = recvCount;
+            const txt = e.data;
+            let cls = '';
+            if (txt.startsWith('【系统】')) cls = 'system';
+            else if (txt.startsWith('【服务端 push】')) cls = 'push';
+            append(txt, cls);
+        };
+
+        ws.onclose = () => {
+            status.textContent = '已断开';
+            status.className = 'bad';
+            append('--- 连接关闭，3 秒后自动重连 ---', 'info');
+            setTimeout(connect, 3000);
+        };
+
+        ws.onerror = () => append('--- 连接错误 ---', 'info');
+    }
+
+    function send() {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        const text = input.value.trim();
+        if (!text) return;
+        ws.send(text);
+        sentCount++;
+        document.getElementById('sentCount').textContent = sentCount;
+        append('我: ' + text, 'me');
+        input.value = '';
+    }
+
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+
+    connect();
+</script>
+</body>
+</html>
