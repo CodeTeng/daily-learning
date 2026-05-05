@@ -1,0 +1,46 @@
+{
+    // basedpyright / Pylance 项目配置。
+    //
+    // basedpyright 默认 typeCheckingMode 是 "recommended"（比官方 pyright 的
+    // "standard" 更严格），会把 reportAny / reportExplicitAny / reportUnknown*
+    // 等一大批规则默认为 warning 甚至 error。对本项目这种与 LLM/Pydantic 动态
+    // 生态重度打交道的代码库，会制造大量假阳性爆红。
+    //
+    // 这里统一切回 "standard" 模式，并显式把若干噪音大的规则设为 "none"
+    // （basedpyright 严格意义上 false 等价于 "none"，但部分版本仅认字符串）。
+    //
+    // 注：basedpyright 优先读本文件，不读 pyproject.toml 里的 [tool.basedpyright]。
+    "typeCheckingMode": "standard",
+    "pythonVersion": "3.11",
+    "include": ["src", "tests"],
+    // src-layout：让 basedpyright 找到 src/ 下的包
+    "extraPaths": ["src"],
+    // 指向项目虚拟环境，避免 "无法解析导入 pydantic/openai/dotenv" 的误报
+    "venvPath": ".",
+    "venv": ".venv",
+    // 三方库大多无 type stub，不强制
+    "reportMissingTypeStubs": "none",
+    // 多行字符串字面量拼接是 prompt 的常规写法
+    "reportImplicitStringConcatenation": "none",
+    // src-layout 下用 `from learning_py.xxx import ...` 是规范写法
+    "reportImplicitRelativeImport": "none",
+    // basedpyright 专有的"理想化"规则集 —— 与 LLM/Pydantic 等动态生态相处
+    // 时几乎只产生噪音，统一关闭
+    "reportAny": "none",
+    "reportExplicitAny": "none",
+    "reportUnknownVariableType": "none",
+    "reportUnknownMemberType": "none",
+    "reportUnknownArgumentType": "none",
+    "reportUnknownParameterType": "none",
+    "reportUnknownLambdaType": "none",
+    // Pydantic BaseModel 的元类 basedpyright 识别不全，会爆 untyped-base-class
+    "reportUntypedBaseClass": "none",
+    // Pydantic 字段是模型定义，没有显式类型注解也合规
+    "reportUnannotatedClassAttribute": "none",
+    // `result.model_dump()` 这种就是要丢弃返回值的副作用调用
+    "reportUnusedCallResult": "none",
+    // @registry.tool() 装饰器收集的函数会被误判为"未使用"
+    "reportUnusedFunction": "none",
+    // 给函数动态挂属性（如 __requires_confirmation__）
+    "reportFunctionMemberAccess": "none"
+}

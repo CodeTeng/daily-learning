@@ -1,3 +1,4 @@
+# pyright: reportAny=false, reportExplicitAny=false, reportUnknownMemberType=false, reportUnknownArgumentType=false, reportImplicitStringConcatenation=false
 """Agent 架构 demo：用真实 LLM（DeepSeek 或任何 OpenAI 协议兼容服务）跑 4 种架构。
 
 前置：

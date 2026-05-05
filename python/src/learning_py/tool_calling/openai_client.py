@@ -1,3 +1,4 @@
+# pyright: reportAny=false, reportExplicitAny=false, reportUnknownVariableType=false, reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUntypedBaseClass=false, reportUnannotatedClassAttribute=false, reportUnusedCallResult=false, reportMissingTypeStubs=false
 """OpenAI 兼容协议的 LLMClient 实现。
 
 读取环境变量：

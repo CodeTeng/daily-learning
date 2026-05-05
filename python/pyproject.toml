@@ -29,26 +29,8 @@ build-backend = "uv_build"
 line-length = 100
 target-version = "py311"
 
-[tool.pyright]
-# 让 Pylance / pyright 用项目的虚拟环境，避免 "无法解析导入" 之类的误报
-venvPath = "."
-venv = ".venv"
-pythonVersion = "3.11"
-include = ["src", "tests"]
-reportMissingTypeStubs = false
-
-[tool.basedpyright]
-# 工程偏好：本项目大量使用多行字符串字面量拼接 prompt，
-# 也会有 Any 类型透传 LLM 返回。关掉这几条减少不必要的红线噪音。
-include = ["src", "tests"]
-# src-layout：让 basedpyright 找到 src/ 下的包
-extraPaths = ["src"]
-reportImplicitStringConcatenation = false
-# src-layout 里用 `from learning_py.xxx import ...` 是规范写法，
-# 但 basedpyright 看到当前文件不在顶层包路径里就会误判为隐式相对导入。
-reportImplicitRelativeImport = false
-reportAny = false
-reportUnknownMemberType = false
-reportUnknownArgumentType = false
-reportUnknownVariableType = false
-reportUnknownParameterType = false
+# 类型检查器（pyright / basedpyright / Pylance）统一读根目录下的
+# `pyrightconfig.json`。放在那里的理由：
+# 1. basedpyright 优先读 pyrightconfig.json，忽略 pyproject.toml 里的配置段
+# 2. 单独文件带 JSONC 注释更可读
+# 3. 和官方 pyright / VSCode Pylance 的行为一致

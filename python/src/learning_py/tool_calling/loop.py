@@ -1,3 +1,4 @@
+# pyright: reportAny=false, reportExplicitAny=false, reportUnknownVariableType=false, reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUntypedBaseClass=false, reportUnannotatedClassAttribute=false, reportUnusedCallResult=false, reportMissingTypeStubs=false
 """Tool Calling 主循环。
 
 把 Function Calling 的完整链路拼起来：

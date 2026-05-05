@@ -1,3 +1,4 @@
+# pyright: reportAny=false, reportExplicitAny=false, reportUnknownVariableType=false, reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUntypedBaseClass=false, reportUnannotatedClassAttribute=false, reportUnusedCallResult=false, reportMissingTypeStubs=false
 """工具定义与 JSON Schema 生成（Pydantic 版本）。
 
 **核心命题**：LLM 看不见你的 Python 函数，只能看见**字符串描述**。所以
