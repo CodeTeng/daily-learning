@@ -8,6 +8,7 @@
 - [`prompt-engineering.md`](./prompt-engineering.md) — Prompt Engineering 核心概念、技巧与 Python 示例
 - [`ai-agent.md`](./ai-agent.md) — AI Agent 核心概念：四大能力、与 LLM 的区别、应用场景
 - [`agent-architectures.md`](./agent-architectures.md) — 4 种 Agent 架构（ReAct / Plan-and-Execute / Reflection / Multi-Agent）原理与代码
+- [`agent-memory.md`](./agent-memory.md) — Agent 记忆系统：短期记忆（对话历史）/ 长期记忆（向量库）/ 检索与更新
 - [`llm-api-practices.md`](./llm-api-practices.md) — LLM API 工程化：采样参数、流式处理、错误处理
 - [`tool-calling.md`](./tool-calling.md) — Tool Calling【必学】：Function Calling / 工具定义与描述 / 参数解析 / 执行与结果返回
 
