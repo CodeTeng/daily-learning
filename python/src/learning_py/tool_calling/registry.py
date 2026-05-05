@@ -1,3 +1,4 @@
+# pyright: reportAny=false, reportExplicitAny=false, reportUnknownVariableType=false, reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUntypedBaseClass=false, reportUnannotatedClassAttribute=false, reportUnusedCallResult=false, reportMissingTypeStubs=false
 """工具注册表 + 参数解析 + 安全执行。
 
 对应"工具调用"四步骤里的后两步：**参数解析** 和 **执行与结果返回**。
@@ -331,7 +332,7 @@ def requires_confirmation(fn: Callable[..., Any]) -> Callable[..., Any]:
     只是加一个 `__requires_confirmation__ = True` 属性，具体在 Agent loop
     里再决定"是否真的停下来问人"，见 `loop.py` 的 `AgentLoop`。
     """
-    fn.__requires_confirmation__ = True  # type: ignore[attr-defined]
+    setattr(fn, "__requires_confirmation__", True)
     return fn
 
 

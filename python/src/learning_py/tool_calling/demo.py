@@ -1,3 +1,4 @@
+# pyright: reportAny=false, reportExplicitAny=false, reportMissingTypeStubs=false, reportUnknownMemberType=false, reportUnknownArgumentType=false
 """把 Tool Calling 四步骤串起来跑的 Demo。
 
 **要求**：`python/.env` 里需要配置好 LLM_API_KEY / LLM_MODEL / LLM_BASE_URL，
@@ -18,11 +19,12 @@ from __future__ import annotations
 
 import json
 
-from learning_py.tool_calling.loop import AgentLoop, LoopEvent
+from learning_py.tool_calling.loop import AgentLoop, LLMResponse, LoopEvent
 from learning_py.tool_calling.openai_client import LLMConfig, OpenAILLMClient
 from learning_py.tool_calling.registry import (
     ToolCall,
     ToolRegistry,
+    ToolResult,
     requires_confirmation,
 )
 
@@ -43,19 +45,19 @@ def get_weather(city: str, unit: str = "c") -> dict[str, object]:
         unit: 温度单位，"c"=摄氏度，"f"=华氏度。
     """
     # 真实场景：调气象 API。这里写死返回值便于演示。
-    data: dict[str, dict[str, object]] = {
-        "北京": {"c": 22, "desc": "晴"},
-        "上海": {"c": 26, "desc": "多云"},
-        "深圳": {"c": 30, "desc": "雷阵雨"},
+    # 用 tuple[float, str] 而不是 dict[str, object]，避免后续 float(row["c"]) 爆类型
+    data: dict[str, tuple[float, str]] = {
+        "北京": (22.0, "晴"),
+        "上海": (26.0, "多云"),
+        "深圳": (30.0, "雷阵雨"),
     }
-    row = data.get(city, {"c": 20, "desc": "未知"})
-    celsius = float(row["c"])  # type: ignore[arg-type]
+    celsius, desc = data.get(city, (20.0, "未知"))
     temp = celsius if unit == "c" else round(celsius * 9 / 5 + 32, 1)
     return {
         "city": city,
         "temperature": temp,
         "unit": unit,
-        "description": row["desc"],
+        "description": desc,
     }
 
 
@@ -68,23 +70,29 @@ def calculate(expression: str) -> float:
     """
     # 真实场景里别直接 eval —— 这里用 AST 白名单做安全计算
     import ast
-    import operator as op
-
-    allowed_op = {
-        ast.Add: op.add, ast.Sub: op.sub,
-        ast.Mult: op.mul, ast.Div: op.truediv,
-        ast.USub: op.neg, ast.UAdd: op.pos,
-    }
 
     def _eval(node: ast.AST) -> float:
         if isinstance(node, ast.Expression):
             return _eval(node.body)
         if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
             return float(node.value)
-        if isinstance(node, ast.BinOp) and type(node.op) in allowed_op:
-            return allowed_op[type(node.op)](_eval(node.left), _eval(node.right))
-        if isinstance(node, ast.UnaryOp) and type(node.op) in allowed_op:
-            return allowed_op[type(node.op)](_eval(node.operand))
+        if isinstance(node, ast.BinOp):
+            left, right = _eval(node.left), _eval(node.right)
+            op = node.op
+            if isinstance(op, ast.Add):
+                return left + right
+            if isinstance(op, ast.Sub):
+                return left - right
+            if isinstance(op, ast.Mult):
+                return left * right
+            if isinstance(op, ast.Div):
+                return left / right
+        if isinstance(node, ast.UnaryOp):
+            val = _eval(node.operand)
+            if isinstance(node.op, ast.USub):
+                return -val
+            if isinstance(node.op, ast.UAdd):
+                return +val
         raise ValueError(f"不允许的表达式节点：{ast.dump(node)}")
 
     return _eval(ast.parse(expression, mode="eval"))
@@ -101,7 +109,22 @@ def send_email(to: str, subject: str, body: str) -> str:
         body: 邮件正文。
     """
     # 真实实现在这里调 SMTP
-    return f"邮件已发送给 {to}，主题：{subject}"
+    return f"邮件已发送给 {to}，主题：{subject}（正文 {len(body)} 字符）"
+
+
+# 用于 demo_parse_arguments：演示 Pydantic 把数字字符串转成 int/float 的能力
+_DEMO_REG = ToolRegistry()
+
+
+@_DEMO_REG.tool()
+def times(a: int, b: float) -> float:
+    """两数相乘
+
+    Args:
+        a: 整数因子
+        b: 小数因子
+    """
+    return a * b
 
 
 # --------------------------------------------------------------------------- #
@@ -134,32 +157,24 @@ def demo_parse_arguments() -> None:
     print("✅ 正常解析:", good)
 
     # Pydantic 自动把字符串数字转成 float
-    print("✅ 类型转换（字符串 -> 数字）：", end=" ")
-    # 造一个有 int/float 参数的小工具演示
-    demo_reg = ToolRegistry()
-
-    @demo_reg.tool()
-    def times(a: int, b: float) -> float:
-        """两数相乘"""
-        return a * b
-
-    print(demo_reg.parse_arguments("times", '{"a": "3", "b": "2.5"}'))
+    coerced = _DEMO_REG.parse_arguments("times", '{"a": "3", "b": "2.5"}')
+    print("✅ 类型转换（字符串 -> 数字）:", coerced)
 
     # 错误：缺必填
     try:
-        registry.parse_arguments("get_weather", '{"unit": "c"}')
+        _ = registry.parse_arguments("get_weather", '{"unit": "c"}')
     except Exception as e:
         print("❌ 缺必填被拦截:", type(e).__name__, str(e))
 
     # 错误：非法 JSON
     try:
-        registry.parse_arguments("get_weather", "not-a-json")
+        _ = registry.parse_arguments("get_weather", "not-a-json")
     except Exception as e:
         print("❌ JSON 非法被拦截:", type(e).__name__, str(e))
 
     # 错误：类型错（传不能被强转的字符串给 int）
     try:
-        demo_reg.parse_arguments("times", '{"a": "not-an-int", "b": 2}')
+        _ = _DEMO_REG.parse_arguments("times", '{"a": "not-an-int", "b": 2}')
     except Exception as e:
         print("❌ 类型错误被拦截:", type(e).__name__, str(e))
 
@@ -179,14 +194,14 @@ def demo_execute() -> None:
     # 未知工具：不抛异常，返回结构化错误
     bad = registry.invoke(ToolCall(id="c2", name="not_exist", arguments="{}"))
     print("\n未知工具（不抛异常，返回结构化错误）:")
-    print(" ", bad.model_dump())
+    print(" ", bad.model_dump_json())
 
     # 业务函数内部报错（除零）
     err = registry.invoke(ToolCall(
         id="c3", name="calculate", arguments='{"expression": "3/0"}',
     ))
     print("\n业务异常被包住:")
-    print(" ", err.model_dump())
+    print(" ", err.model_dump_json())
 
 
 # --------------------------------------------------------------------------- #
@@ -194,9 +209,14 @@ def demo_execute() -> None:
 # --------------------------------------------------------------------------- #
 
 def _print_event(ev: LoopEvent) -> None:
-    """把事件流简洁地打到终端，便于观察 Agent 的每一步。"""
+    """把事件流简洁地打到终端，便于观察 Agent 的每一步。
+
+    注：`LoopEvent.data` 是 `dict[str, Any]`，所以这里每次取值后都显式做一次
+    类型断言。这样既能让 IDE 知道字段类型，也能在数据格式不匹配时早失败。
+    """
     if ev.kind == "llm_response":
         resp = ev.data["response"]
+        assert isinstance(resp, LLMResponse)
         n = len(resp.tool_calls)
         text = (resp.content or "").strip()
         if n:
@@ -205,15 +225,18 @@ def _print_event(ev: LoopEvent) -> None:
         else:
             print(f"  [llm]  → 最终答复：{text}")
     elif ev.kind == "tool_call":
-        c: ToolCall = ev.data["call"]
+        c = ev.data["call"]
+        assert isinstance(c, ToolCall)
         print(f"  [call] {c.name}({c.arguments})")
     elif ev.kind == "tool_result":
         r = ev.data["result"]
+        assert isinstance(r, ToolResult)
         label = "ok" if r.ok else "ERR"
         body = r.content if r.ok else r.error
         print(f"  [ret]  {r.name}[{label}] → {str(body)[:200]}")
     elif ev.kind == "needs_confirm":
         c = ev.data["call"]
+        assert isinstance(c, ToolCall)
         print(f"  [!]    工具 {c.name} 需要人工确认：{c.arguments}")
 
 
@@ -230,10 +253,11 @@ def demo_real_llm() -> None:
     print(f"使用模型: {config.model}")
     if config.base_url:
         print(f"自定义 base_url: {config.base_url}")
-    print(
+    sampling_line = (
         f"采样参数: temperature={config.sampling.temperature}, "
-        f"max_tokens={config.sampling.max_tokens}\n"
+        + f"max_tokens={config.sampling.max_tokens}"
     )
+    print(sampling_line + "\n")
 
     client = OpenAILLMClient(config)
 
