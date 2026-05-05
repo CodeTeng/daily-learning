@@ -1,16 +1,12 @@
-HELP.md
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+### macOS ###
+.DS_Store
 
-### IntelliJ IDEA ###
-.idea
+### IDE ###
+.idea/
 *.iws
 *.iml
 *.ipr
-
-### Eclipse ###
+.vscode/
 .apt_generated
 .classpath
 .factorypath
@@ -19,24 +15,50 @@ target/
 .springBeans
 .sts4-cache
 
-### NetBeans ###
+### Java / Maven ###
+HELP.md
+**/target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### Stray class files ###
+*.class
+
+### Gradle / NetBeans 遗留 ###
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
+
+### Python / uv ###
+**/__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.env
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
 build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+dist/
 
-### VS Code ###
-.vscode/
+### Go ###
+# 构建产物（按目录名命中常见情况；如 go build -o 自定义则忽略不到）
+go/bin/
+**/*.test
+**/*.out
+# 覆盖率报告
+coverage.txt
+coverage.out
+# 可执行文件（Windows 才有 .exe，Unix 通常无后缀，因此不强删）
+*.exe
 
-### macOS ###
-.DS_Store
-
-### Firecrawl scratch files ###
+### Misc ###
 .firecrawl/
-
-### Stray class files (root dir) ###
-*.class
