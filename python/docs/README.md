@@ -11,5 +11,6 @@
 - [`agent-memory.md`](./agent-memory.md) — Agent 记忆系统：短期记忆（对话历史）/ 长期记忆（向量库）/ 检索与更新
 - [`llm-api-practices.md`](./llm-api-practices.md) — LLM API 工程化：采样参数、流式处理、错误处理
 - [`tool-calling.md`](./tool-calling.md) — Tool Calling【必学】：Function Calling / 工具定义与描述 / 参数解析 / 执行与结果返回
+- [`langchain-framework-knowledge-base.md`](./langchain-framework-knowledge-base.md) — LangChain 学习总览（Models / Messages / Tools / Agents / Memory / Streaming / Structured Output）
 
 > 新增笔记时，请保持「一篇一主题」的粒度，并在文末附上对应的可运行示例路径（如有）。
