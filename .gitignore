@@ -62,3 +62,4 @@ coverage.out
 
 ### Misc ###
 .firecrawl/
+trace_output.json

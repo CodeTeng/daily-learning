@@ -17,6 +17,19 @@ dependencies = [
     "python-dotenv>=1.2.2",
 ]
 
+[project.optional-dependencies]
+otel = [
+    "opentelemetry-api>=1.28.0",
+    "opentelemetry-sdk>=1.28.0",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.28.0",
+]
+langsmith-extra = [
+    "langsmith>=0.8.0",
+]
+observability = [
+    "learning-py[otel,langsmith-extra]",
+]
+
 [project.scripts]
 learning-py = "learning_py:main"
 
