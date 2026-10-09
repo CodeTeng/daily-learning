@@ -1,0 +1,15 @@
+{
+  "eval_id": 3,
+  "eval_name": "list-objects",
+  "prompt": "帮我写一个 Python 函数，遍历 COS 存储桶 media-assets-1250000000 中 images/ 前缀下的所有文件，把文件名和文件大小打印出来，并且能处理分页（万一文件超过 1000 个）。",
+  "assertions": [
+    {"id": "has-list-objects", "description": "包含 list_objects 调用"},
+    {"id": "prefix-filter", "description": "使用 Prefix='images/' 过滤对象"},
+    {"id": "pagination-loop", "description": "包含分页循环（while 循环 + Marker 机制）"},
+    {"id": "is-truncated-check", "description": "检查 IsTruncated 判断是否还有更多数据"},
+    {"id": "prints-key-size", "description": "打印每个对象的 Key 和 Size"},
+    {"id": "correct-bucket", "description": "Bucket 参数正确：media-assets-1250000000"},
+    {"id": "client-init", "description": "包含完整的客户端初始化"},
+    {"id": "wrapped-in-function", "description": "代码包装在函数中便于复用"}
+  ]
+}

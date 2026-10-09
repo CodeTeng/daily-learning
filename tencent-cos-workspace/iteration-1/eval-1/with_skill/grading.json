@@ -1,0 +1,49 @@
+{
+  "config": "with_skill",
+  "total_assertions": 8,
+  "passed": 7,
+  "failed": 1,
+  "pass_rate": 0.88,
+  "expectations": [
+    {
+      "text": "has-upload-call: 包含 put_object_from_local_file 或 put_object 上传调用",
+      "passed": true,
+      "evidence": "找到上传方法调用"
+    },
+    {
+      "text": "correct-bucket: Bucket 参数正确：my-data-1250000000",
+      "passed": true,
+      "evidence": "Bucket 名称正确"
+    },
+    {
+      "text": "correct-key: Key 路径正确，包含 reports/ 目录和文件名",
+      "passed": true,
+      "evidence": "Key 路径包含 reports/ 目录"
+    },
+    {
+      "text": "content-type-set: 设置了 ContentType 为 xlsx MIME 类型",
+      "passed": false,
+      "evidence": "未设置 .xlsx 的 ContentType"
+    },
+    {
+      "text": "md5-enabled: 开启了 EnableMD5=True 校验",
+      "passed": true,
+      "evidence": "开启了 MD5 校验"
+    },
+    {
+      "text": "client-init: 包含完整的客户端初始化（CosConfig + CosS3Client）",
+      "passed": true,
+      "evidence": "包含客户端初始化"
+    },
+    {
+      "text": "env-config: 从环境变量或 .env 文件读取密钥配置",
+      "passed": true,
+      "evidence": "从环境变量读取配置"
+    },
+    {
+      "text": "error-handling: 包含 try/except 错误处理（CosServiceError 或 CosClientError）",
+      "passed": true,
+      "evidence": "包含错误处理"
+    }
+  ]
+}

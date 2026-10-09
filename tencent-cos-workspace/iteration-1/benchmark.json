@@ -1,0 +1,49 @@
+{
+  "skill_name": "tencent-cos",
+  "iteration": 1,
+  "configs": [
+    {
+      "name": "with_skill",
+      "pass_rate_mean": 0.95,
+      "pass_rate_stddev": 0.06,
+      "time_mean_seconds": 73.0,
+      "time_stddev_seconds": 10.7,
+      "tokens_mean": 44500,
+      "tokens_stddev": 2400,
+      "evals": [
+        {"eval_id": 1, "eval_name": "upload-file", "pass_rate": 0.88, "time_seconds": 72.5, "tokens": 43590},
+        {"eval_id": 2, "eval_name": "download-file", "pass_rate": 1.00, "time_seconds": 84.7, "tokens": 44783},
+        {"eval_id": 3, "eval_name": "list-objects", "pass_rate": 0.88, "time_seconds": 75.1, "tokens": 48184},
+        {"eval_id": 4, "eval_name": "create-bucket", "pass_rate": 1.00, "time_seconds": 74.8, "tokens": 45637},
+        {"eval_id": 5, "eval_name": "presigned-url", "pass_rate": 1.00, "time_seconds": 57.9, "tokens": 43097}
+      ]
+    },
+    {
+      "name": "without_skill",
+      "pass_rate_mean": 0.95,
+      "pass_rate_stddev": 0.06,
+      "time_mean_seconds": 75.3,
+      "time_stddev_seconds": 15.6,
+      "tokens_mean": 40900,
+      "tokens_stddev": 1400,
+      "evals": [
+        {"eval_id": 1, "eval_name": "upload-file", "pass_rate": 0.88, "time_seconds": 93.3, "tokens": 43016},
+        {"eval_id": 2, "eval_name": "download-file", "pass_rate": 1.00, "time_seconds": 63.3, "tokens": 41034},
+        {"eval_id": 3, "eval_name": "list-objects", "pass_rate": 0.88, "time_seconds": 97.6, "tokens": 41807},
+        {"eval_id": 4, "eval_name": "create-bucket", "pass_rate": 1.00, "time_seconds": 67.1, "tokens": 39958},
+        {"eval_id": 5, "eval_name": "presigned-url", "pass_rate": 1.00, "time_seconds": 55.2, "tokens": 38960}
+      ]
+    }
+  ],
+  "comparison": {
+    "with_skill_vs_without_skill": {
+      "pass_rate_delta": 0.0,
+      "pass_rate_delta_pct": "0%",
+      "time_delta_seconds": -2.3,
+      "time_delta_pct": "-3%",
+      "tokens_delta": 3600,
+      "tokens_delta_pct": "+9%"
+    }
+  },
+  "notes": "首次迭代。with_skill 和 without_skill 在 pass_rate 上表现一致（95%），断言失败主要来自评分脚本的字符串匹配严格度（如 ContentType 的变体写法、Bucket 名使用变量传递）。with_skill 生成的代码平均快 2.3 秒，但 token 消耗多 9%。两个版本都生成了高质量的功能代码。"
+}

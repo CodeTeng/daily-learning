@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "tencent-cos", "runs": [{"id": "eval-1-with_skill", "prompt": "\u5e2e\u6211\u628a\u672c\u5730\u7684 ./data/sales-report-2026Q3.xlsx \u6587\u4ef6\u4e0a\u4f20\u5230\u817e\u8baf\u4e91 COS \u5b58\u50a8\u6876 my-data-1250000000 \u7684 reports/ \u76ee\u5f55\u4e0b\uff0c\u4e0a\u4f20\u65f6\u9700\u8981\u8bbe\u7f6e ContentType \u4e3a application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\uff0c\u5e76\u4e14\u5f00\u542f MD5 \u6821\u9a8c\u3002\u8bf7\u5199\u51fa\u5b8c\u6574\u7684 Python \u4ee3\u7801\u3002", "eval_id": 1, "outputs": [{"name": "summary.md", "type": "text", "content": "# \u4e0a\u4f20\u6587\u4ef6\u5230\u817e\u8baf\u4e91 COS\n\n\u5c06\u672c\u5730 Excel \u6587\u4ef6 `data/sales-report-2026Q3.xlsx` \u4e0a\u4f20\u5230\u817e\u8baf\u4e91 COS \u5b58\u50a8\u6876 `my-data-1250000000` \u7684 `reports/` \u76ee\u5f55\u4e0b\u3002\n\n\u5b9e\u73b0\u8981\u70b9\uff1a\n\n1. \u4ece\u73af\u5883\u53d8\u91cf\u6216 `.env` \u6587\u4ef6\u8bfb\u53d6\u817e\u8baf\u4e91\u5bc6\u94a5\u548c\u5730\u57df\u914d\u7f6e\uff0c\u521d\u59cb\u5316 `CosS3Client`\n2. \u4f7f\u7528 `put_object_from_local_file` \u65b9\u6cd5\u4e0a\u4f20\u672c\u5730\u6587\u4ef6\n3. \u8bbe\u7f6e `ContentType` \u4e3a `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`\n4. \u5f00\u542f `EnableMD5=True` \u8fdb\u884c MD5 \u5b8c\u6574\u6027\u6821\u9a8c\n5. \u6355\u83b7 `CosServiceError` \u548c `CosClientError` \u4e24\u7c7b\u5f02\u5e38\u5e76\u8f93\u51fa\u8be6\u7ec6\u4fe1\u606f\n"}, {"name": "upload_file.py", "type": "text", "content": "#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\n\"\"\"\n\u5c06\u672c\u5730 Excel \u6587\u4ef6\u4e0a\u4f20\u5230\u817e\u8baf\u4e91 COS \u5b58\u50a8\u6876\u3002\n\n\u4f7f\u7528\u65b9\u5f0f\uff1a\n    python upload_file.py\n\"\"\"\n\nimport os\nimport sys\nfrom pathlib import Path\n\nfrom qcloud_cos import CosConfig, CosS3Client\nfrom qcloud_cos import CosServiceError, CosClientError\nfrom dotenv import load_dotenv\n\n\n# ============================================================\n# 1. \u52a0\u8f7d\u914d\u7f6e\uff08\u6309\u4f18\u5148\u7ea7\uff1a.env > ~/.cos/config > \u73af\u5883\u53d8\u91cf\uff09\n# ============================================================\nload_dotenv()\n\nsecret_id = os.getenv(\"TENCENT_SECRET_ID\")\nsecret_key = os.getenv(\"TENCENT_SECRET_KEY\")\nregion = os.getenv(\"TENCENT_COS_REGION\", \"ap-beijing\")\n\nif not secret_id or not secret_key:\n    raise RuntimeError(\n        \"COS \u5bc6\u94a5\u672a\u914d\u7f6e\u3002\u8bf7\u8bbe\u7f6e\u73af\u5883\u53d8\u91cf TENCENT_SECRET_ID \u548c TENCENT_SECRET_KEY \"\n        \"\u6216\u521b\u5efa .env \u6587\u4ef6\u3002\u4e5f\u53ef\u4ee5\u8fd0\u884c: python scripts/init_config.py\"\n    )\n\n# ============================================================\n# 2. \u521d\u59cb\u5316 COS \u5ba2\u6237\u7aef\n# ============================================================\nconfig = CosConfig(\n    Region=region,\n    SecretId=secret_id,\n    SecretKey=secret_key,\n    Scheme=\"https\",\n    Timeout=30,\n    PoolConnections=10,\n    PoolMaxSize=10,\n)\nclient = CosS3Client(config)\n\n# ============================================================\n# 3. \u4e0a\u4f20\u53c2\u6570\n# ============================================================\nBUCKET = \"my-data-1250000000\"\nLOCAL_FILE = Path(__file__).resolve().parents[3] / \"data\" / \"sales-report-2026Q3.xlsx\"\nCOS_KEY = \"reports/sales-report-2026Q3.xlsx\"\nCONTENT_TYPE = \"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\"\n\n\ndef upload_excel_file() -> None:\n    \"\"\"\u4e0a\u4f20 Excel \u6587\u4ef6\u5230 COS\uff0c\u5e26 MD5 \u6821\u9a8c\u548c\u5b8c\u6574\u7684\u9519\u8bef\u5904\u7406\u3002\"\"\"\n    # \u68c0\u67e5\u672c\u5730\u6587\u4ef6\u662f\u5426\u5b58\u5728\n    if not LOCAL_FILE.exists():\n        print(f\"[\u9519\u8bef] \u672c\u5730\u6587\u4ef6\u4e0d\u5b58\u5728: {LOCAL_FILE}\")\n        sys.exit(1)\n\n    file_size_mb = LOCAL_FILE.stat().st_size / (1024 * 1024)\n    print(f\"[\u4fe1\u606f] \u672c\u5730\u6587\u4ef6: {LOCAL_FILE}\")\n    print(f\"[\u4fe1\u606f] \u6587\u4ef6\u5927\u5c0f: {file_size_mb:.2f} MB\")\n    print(f\"[\u4fe1\u606f] \u76ee\u6807\u5b58\u50a8\u6876: {BUCKET}\")\n    print(f\"[\u4fe1\u606f] COS \u8def\u5f84: {COS_KEY}\")\n    print(f\"[\u4fe1\u606f] ContentType: {CONTENT_TYPE}\")\n    print(f\"[\u4fe1\u606f] \u5f00\u59cb\u4e0a\u4f20...\")\n\n    try:\n        response = client.put_object_from_local_file(\n            Bucket=BUCKET,\n            LocalFilePath=str(LOCAL_FILE),\n            Key=COS_KEY,\n            EnableMD5=True,\n            ContentType=CONTENT_TYPE,\n        )\n        print(f\"[\u6210\u529f] \u6587\u4ef6\u4e0a\u4f20\u5b8c\u6210\uff01\")\n        print(f\"[\u6210\u529f] ETag: {response['ETag']}\")\n        print(f\"[\u6210\u529f] Request ID: {response.get('x-cos-request-id', 'N/A')}\")\n\n    except CosServiceError as e:\n        # \u670d\u52a1\u7aef\u9519\u8bef\uff08\u5982\u6743\u9650\u4e0d\u8db3\u3001\u5b58\u50a8\u6876\u4e0d\u5b58\u5728\uff09\n        print(f\"[\u670d\u52a1\u7aef\u9519\u8bef] \u9519\u8bef\u7801: {e.get_error_code()}\")\n        print(f\"[\u670d\u52a1\u7aef\u9519\u8bef] \u9519\u8bef\u4fe1\u606f: {e.get_error_msg()}\")\n        print(f\"[\u670d\u52a1\u7aef\u9519\u8bef] HTTP \u72b6\u6001\u7801: {e.get_status_code()}\")\n        print(f\"[\u670d\u52a1\u7aef\u9519\u8bef] Request ID: {e.get_request_id()}\")\n        print(f\"[\u670d\u52a1\u7aef\u9519\u8bef] Resource: {e.get_resource_location()}\")\n        sys.exit(1)\n\n    except CosClientError as e:\n        # \u5ba2\u6237\u7aef\u9519\u8bef\uff08\u5982\u7f51\u7edc\u8d85\u65f6\u3001DNS \u89e3\u6790\u5931\u8d25\uff09\n        print(f\"[\u5ba2\u6237\u7aef\u9519\u8bef] {e}\")\n        sys.exit(1)\n\n    except Exception as e:\n        # \u5176\u4ed6\u672a\u9884\u671f\u7684\u9519\u8bef\n        print(f\"[\u672a\u77e5\u9519\u8bef] {type(e).__name__}: {e}\")\n        sys.exit(1)\n\n\nif __name__ == \"__main__\":\n    upload_excel_file()\n"}], "grading": {"config": "with_skill", "total_assertions": 8, "passed": 7, "failed": 1, "pass_rate": 0.88, "expectations": [{"text": "has-upload-call: \u5305\u542b put_object_from_local_file \u6216 put_object \u4e0a\u4f20\u8c03\u7528", "passed": true, "evidence": "\u627e\u5230\u4e0a\u4f20\u65b9\u6cd5\u8c03\u7528"}, {"text": "correct-bucket: Bucket \u53c2\u6570\u6b63\u786e\uff1amy-data-1250000000", "passed": true, "evidence": "Bucket \u540d\u79f0\u6b63\u786e"}, {"text": "correct-key: Key \u8def\u5f84\u6b63\u786e\uff0c\u5305\u542b reports/ \u76ee\u5f55\u548c\u6587\u4ef6\u540d", "passed": true, "evidence": "Key \u8def\u5f84\u5305\u542b reports/ \u76ee\u5f55"}, {"text": "content-type-set: \u8bbe\u7f6e\u4e86 ContentType \u4e3a xlsx MIME \u7c7b\u578b", "passed": false, "evidence": "\u672a\u8bbe\u7f6e .xlsx \u7684 ContentType"}, {"text": "md5-enabled: \u5f00\u542f\u4e86 EnableMD5=True \u6821\u9a8c", "passed": true, "evidence": "\u5f00\u542f\u4e86 MD5 \u6821\u9a8c"}, {"text": "client-init: \u5305\u542b\u5b8c\u6574\u7684\u5ba2\u6237\u7aef\u521d\u59cb\u5316\uff08CosConfig + CosS3Client\uff09", "passed": true, "evidence": "\u5305\u542b\u5ba2\u6237\u7aef\u521d\u59cb\u5316"}, {"text": "env-config: \u4ece\u73af\u5883\u53d8\u91cf\u6216 .env \u6587\u4ef6\u8bfb\u53d6\u5bc6\u94a5\u914d\u7f6e", "passed": true, "evidence": "\u4ece\u73af\u5883\u53d8\u91cf\u8bfb\u53d6\u914d\u7f6e"}, {"text": "error-handling: \u5305\u542b try/except \u9519\u8bef\u5904\u7406\uff08CosServiceError \u6216 CosClientError\uff09", "passed": true, "evidence": "\u5305\u542b\u9519\u8bef\u5904\u7406"}]}}, {"id": "eval-1-without_skill", "prompt": "\u5e2e\u6211\u628a\u672c\u5730\u7684 ./data/sales-report-2026Q3.xlsx \u6587\u4ef6\u4e0a\u4f20\u5230\u817e\u8baf\u4e91 COS \u5b58\u50a8\u6876 my-data-1250000000 \u7684 reports/ \u76ee\u5f55\u4e0b\uff0c\u4e0a\u4f20\u65f6\u9700\u8981\u8bbe\u7f6e ContentType \u4e3a application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\uff0c\u5e76\u4e14\u5f00\u542f MD5 \u6821\u9a8c\u3002\u8bf7\u5199\u51fa\u5b8c\u6574\u7684 Python \u4ee3\u7801\u3002", "eval_id": 1, "outputs": [{"name": "upload_file.py", "type": "text", "content": "#!/usr/bin/env python3\n\"\"\"\n\u4e0a\u4f20\u672c\u5730 Excel \u6587\u4ef6\u5230\u817e\u8baf\u4e91 COS \u5b58\u50a8\u6876\u3002\n\n\u529f\u80fd\uff1a\n- \u4ece\u73af\u5883\u53d8\u91cf\u8bfb\u53d6 SecretId / SecretKey\n- \u8bbe\u7f6e ContentType \u4e3a Excel \u5bf9\u5e94\u7684 MIME \u7c7b\u578b\n- \u5f00\u542f MD5 \u6821\u9a8c\uff0c\u786e\u4fdd\u4e0a\u4f20\u5b8c\u6574\u6027\n- \u5b8c\u6574\u7684\u9519\u8bef\u5904\u7406\u548c\u53cb\u597d\u7684\u8f93\u51fa\u4fe1\u606f\n\"\"\"\n\nimport os\nimport sys\nfrom qcloud_cos import CosConfig, CosS3Client\nfrom qcloud_cos.cos_exception import CosClientError, CosServiceError\n\n\ndef upload_file_to_cos() -> None:\n    \"\"\"\n    \u5c06\u672c\u5730 Excel \u6587\u4ef6\u4e0a\u4f20\u5230\u6307\u5b9a\u7684 COS \u5b58\u50a8\u6876\u76ee\u5f55\u4e0b\u3002\n    \"\"\"\n\n    # \u2500\u2500 1. \u4ece\u73af\u5883\u53d8\u91cf\u8bfb\u53d6\u8bbf\u95ee\u51ed\u8bc1 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    secret_id: str | None = os.environ.get(\"COS_SECRET_ID\")\n    secret_key: str | None = os.environ.get(\"COS_SECRET_KEY\")\n\n    if not secret_id or not secret_key:\n        print(\"\u9519\u8bef\uff1a\u8bf7\u8bbe\u7f6e\u73af\u5883\u53d8\u91cf COS_SECRET_ID \u548c COS_SECRET_KEY\")\n        sys.exit(1)\n\n    # \u2500\u2500 2. \u914d\u7f6e\u53c2\u6570 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    region: str = \"ap-guangzhou\"                     # \u5b58\u50a8\u6876\u6240\u5728\u5730\u57df\uff0c\u6309\u5b9e\u9645\u60c5\u51b5\u4fee\u6539\n    bucket_name: str = \"my-data-1250000000\"          # \u5b58\u50a8\u6876\u540d\u79f0\uff08\u542b APPID\uff09\n    local_file_path: str = \"./data/sales-report-2026Q3.xlsx\"  # \u672c\u5730\u6587\u4ef6\u8def\u5f84\n    cos_object_key: str = \"reports/sales-report-2026Q3.xlsx\"  # COS \u4e0a\u7684\u5bf9\u8c61\u952e\uff08\u8def\u5f84\uff09\n\n    # \u2500\u2500 3. \u68c0\u67e5\u672c\u5730\u6587\u4ef6\u662f\u5426\u5b58\u5728 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    if not os.path.isfile(local_file_path):\n        print(f\"\u9519\u8bef\uff1a\u627e\u4e0d\u5230\u672c\u5730\u6587\u4ef6 {local_file_path}\")\n        sys.exit(1)\n\n    # \u2500\u2500 4. \u521d\u59cb\u5316 COS \u5ba2\u6237\u7aef \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    config = CosConfig(\n        Region=region,\n        SecretId=secret_id,\n        SecretKey=secret_key,\n        Scheme=\"https\",       # \u4f7f\u7528 HTTPS\n    )\n    client = CosS3Client(config)\n\n    # \u2500\u2500 5. \u4e0a\u4f20\u6587\u4ef6\uff08\u5e26 MD5 \u6821\u9a8c\uff09 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    try:\n        response = client.upload_file(\n            Bucket=bucket_name,\n            Key=cos_object_key,\n            LocalFilePath=local_file_path,\n            EnableMD5=True,   # \u5f00\u542f MD5 \u6821\u9a8c\uff0c\u786e\u4fdd\u6570\u636e\u5b8c\u6574\u6027\n            ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\",\n        )\n\n        # \u63d0\u53d6\u5173\u952e\u54cd\u5e94\u4fe1\u606f\n        etag: str = response.get(\"ETag\", \"\")\n        request_id: str = response.get(\"x-cos-request-id\", \"\")\n\n        print(\"\u4e0a\u4f20\u6210\u529f\uff01\")\n        print(f\"  \u672c\u5730\u6587\u4ef6 : {local_file_path}\")\n        print(f\"  \u76ee\u6807\u4f4d\u7f6e : {bucket_name}/{cos_object_key}\")\n        print(f\"  \u5b58\u50a8\u533a\u57df : {region}\")\n        print(f\"  ETag     : {etag}\")\n        print(f\"  RequestId: {request_id}\")\n\n    except FileNotFoundError:\n        print(f\"\u9519\u8bef\uff1a\u627e\u4e0d\u5230\u672c\u5730\u6587\u4ef6 {local_file_path}\")\n        sys.exit(1)\n\n    except CosClientError as e:\n        # \u5ba2\u6237\u7aef\u9519\u8bef\uff08\u5982\u7f51\u7edc\u95ee\u9898\u3001\u53c2\u6570\u9519\u8bef\uff09\n        print(f\"\u5ba2\u6237\u7aef\u9519\u8bef\uff1a{e}\")\n        sys.exit(1)\n\n    except CosServiceError as e:\n        # \u670d\u52a1\u7aef\u9519\u8bef\uff08COS \u8fd4\u56de\u7684\u9519\u8bef\uff09\n        print(f\"\u670d\u52a1\u7aef\u9519\u8bef\uff1a\")\n        print(f\"  \u9519\u8bef\u7801   : {e.get_error_code()}\")\n        print(f\"  \u9519\u8bef\u4fe1\u606f : {e.get_error_msg()}\")\n        print(f\"  RequestId: {e.get_request_id()}\")\n        print(f\"  HTTP \u72b6\u6001: {e.get_status_code()}\")\n        sys.exit(1)\n\n    except Exception as e:\n        print(f\"\u672a\u77e5\u9519\u8bef\uff1a{e}\")\n        sys.exit(1)\n\n\nif __name__ == \"__main__\":\n    upload_file_to_cos()\n"}], "grading": {"config": "without_skill", "total_assertions": 8, "passed": 7, "failed": 1, "pass_rate": 0.88, "expectations": [{"text": "has-upload-call: \u5305\u542b put_object_from_local_file \u6216 put_object \u4e0a\u4f20\u8c03\u7528", "passed": false, "evidence": "\u672a\u627e\u5230 put_object_from_local_file \u6216 put_object \u8c03\u7528"}, {"text": "correct-bucket: Bucket \u53c2\u6570\u6b63\u786e\uff1amy-data-1250000000", "passed": true, "evidence": "Bucket \u540d\u79f0\u6b63\u786e"}, {"text": "correct-key: Key \u8def\u5f84\u6b63\u786e\uff0c\u5305\u542b reports/ \u76ee\u5f55\u548c\u6587\u4ef6\u540d", "passed": true, "evidence": "Key \u8def\u5f84\u5305\u542b reports/ \u76ee\u5f55"}, {"text": "content-type-set: \u8bbe\u7f6e\u4e86 ContentType \u4e3a xlsx MIME \u7c7b\u578b", "passed": true, "evidence": "\u8bbe\u7f6e\u4e86\u6b63\u786e\u7684 ContentType"}, {"text": "md5-enabled: \u5f00\u542f\u4e86 EnableMD5=True \u6821\u9a8c", "passed": true, "evidence": "\u5f00\u542f\u4e86 MD5 \u6821\u9a8c"}, {"text": "client-init: \u5305\u542b\u5b8c\u6574\u7684\u5ba2\u6237\u7aef\u521d\u59cb\u5316\uff08CosConfig + CosS3Client\uff09", "passed": true, "evidence": "\u5305\u542b\u5ba2\u6237\u7aef\u521d\u59cb\u5316"}, {"text": "env-config: \u4ece\u73af\u5883\u53d8\u91cf\u6216 .env \u6587\u4ef6\u8bfb\u53d6\u5bc6\u94a5\u914d\u7f6e", "passed": true, "evidence": "\u4ece\u73af\u5883\u53d8\u91cf\u8bfb\u53d6\u914d\u7f6e"}, {"text": "error-handling: \u5305\u542b try/except \u9519\u8bef\u5904\u7406\uff08CosServiceError \u6216 CosClientError\uff09", "passed": true, "evidence": "\u5305\u542b\u9519\u8bef\u5904\u7406"}]}}, {"id": "eval-2-with_skill", "prompt": "\u6211\u9700\u8981\u4ece\u817e\u8baf\u4e91 COS \u7684\u5b58\u50a8\u6876 data-backup-1250000000 \u4e2d\u4e0b\u8f7d backups/db-2026-07-25.tar.gz \u6587\u4ef6\uff0c\u4fdd\u5b58\u5230\u672c\u5730\u7684 ./downloads/ \u76ee\u5f55\u3002\u5982\u679c\u6587\u4ef6\u8d85\u8fc7 1GB\uff0c\u53ea\u9700\u8981\u4e0b\u8f7d\u524d 512MB \u8fdb\u884c\u6821\u9a8c\u5c31\u884c\u3002\u8bf7\u5199\u51fa Python \u4ee3\u7801\u3002", "eval_id": 2, "outputs": [{"name": "download_file.py", "type": "text", "content": "\"\"\"\n\u4ece\u817e\u8baf\u4e91 COS \u4e0b\u8f7d\u6587\u4ef6\uff0c\u652f\u6301\u5927\u6587\u4ef6\u8303\u56f4\u4e0b\u8f7d\u6821\u9a8c\u3002\n\n\u9700\u6c42\uff1a\n- \u4ece\u5b58\u50a8\u6876 data-backup-1250000000 \u4e0b\u8f7d backups/db-2026-07-25.tar.gz\n- \u4fdd\u5b58\u5230\u672c\u5730 ./downloads/ \u76ee\u5f55\n- \u5982\u679c\u6587\u4ef6\u8d85\u8fc7 1GB\uff0c\u53ea\u4e0b\u8f7d\u524d 512MB \u7528\u4e8e\u6821\u9a8c\n\"\"\"\n\nimport os\nimport sys\nfrom pathlib import Path\n\nfrom qcloud_cos import CosConfig, CosS3Client\nfrom qcloud_cos import CosServiceError, CosClientError\nfrom dotenv import load_dotenv\n\n# ============================================================\n# \u914d\u7f6e\u5e38\u91cf\n# ============================================================\n\nBUCKET = \"data-backup-1250000000\"\nKEY = \"backups/db-2026-07-25.tar.gz\"\nLOCAL_DIR = Path(\"./downloads\")\n\n# \u9608\u503c\uff1a\u8d85\u8fc7 1GB \u5219\u53ea\u4e0b\u8f7d\u524d 512MB\nSIZE_THRESHOLD = 1 * 1024 * 1024 * 1024  # 1 GB\nPARTIAL_SIZE = 512 * 1024 * 1024          # 512 MB\n\n# ============================================================\n# 1. \u5ba2\u6237\u7aef\u521d\u59cb\u5316\uff08\u6309\u7167 skill \u6a21\u5f0f\uff09\n# ============================================================\n\nload_dotenv()\n\nsecret_id = os.getenv(\"TENCENT_SECRET_ID\")\nsecret_key = os.getenv(\"TENCENT_SECRET_KEY\")\nregion = os.getenv(\"TENCENT_COS_REGION\", \"ap-beijing\")\n\nif not secret_id or not secret_key:\n    raise RuntimeError(\n        \"COS \u5bc6\u94a5\u672a\u914d\u7f6e\u3002\u8bf7\u5728 .env \u6587\u4ef6\u3001~/.cos/config \u6587\u4ef6\u6216\u73af\u5883\u53d8\u91cf\u4e2d\u8bbe\u7f6e \"\n        \"TENCENT_SECRET_ID \u548c TENCENT_SECRET_KEY\u3002\\n\"\n        \"\u4e5f\u53ef\u4ee5\u8fd0\u884c: python scripts/init_config.py\"\n    )\n\nconfig = CosConfig(\n    Region=region,\n    SecretId=secret_id,\n    SecretKey=secret_key,\n    Scheme=\"https\",\n    Timeout=30,\n    PoolConnections=10,\n    PoolMaxSize=10,\n)\nclient = CosS3Client(config)\n\nprint(f\"[INFO] COS \u5ba2\u6237\u7aef\u5df2\u521d\u59cb\u5316\uff0c\u5730\u57df: {region}\")\n\n# ============================================================\n# 2. \u68c0\u67e5\u6587\u4ef6\u5927\u5c0f\uff08head_object\uff09\n# ============================================================\n\nprint(f\"[INFO] \u6b63\u5728\u67e5\u8be2\u6587\u4ef6\u4fe1\u606f: {KEY}\")\nprint(f\"[INFO] \u5b58\u50a8\u6876: {BUCKET}\")\n\ntry:\n    head_response = client.head_object(Bucket=BUCKET, Key=KEY)\nexcept CosServiceError as e:\n    print(f\"[ERROR] \u67e5\u8be2\u6587\u4ef6\u5931\u8d25 - \u670d\u52a1\u7aef\u9519\u8bef\")\n    print(f\"  \u9519\u8bef\u7801: {e.get_error_code()}\")\n    print(f\"  \u9519\u8bef\u4fe1\u606f: {e.get_error_msg()}\")\n    print(f\"  HTTP \u72b6\u6001\u7801: {e.get_status_code()}\")\n    print(f\"  Request ID: {e.get_request_id()}\")\n    sys.exit(1)\nexcept CosClientError as e:\n    print(f\"[ERROR] \u67e5\u8be2\u6587\u4ef6\u5931\u8d25 - \u5ba2\u6237\u7aef\u9519\u8bef: {e}\")\n    sys.exit(1)\n\nfile_size = int(head_response.get(\"Content-Length\", 0))\nprint(f\"[INFO] \u6587\u4ef6\u5927\u5c0f: {file_size:,} bytes ({file_size / (1024**3):.2f} GB)\")\n\n# ============================================================\n# 3. \u51b3\u5b9a\u4e0b\u8f7d\u7b56\u7565\n# ============================================================\n\nif file_size > SIZE_THRESHOLD:\n    print(\n        f\"[INFO] \u6587\u4ef6\u5927\u5c0f\u8d85\u8fc7 {SIZE_THRESHOLD / (1024**3):.0f}GB \u9608\u503c\uff0c\"\n        f\"\u5c06\u53ea\u4e0b\u8f7d\u524d {PARTIAL_SIZE / (1024**2):.0f}MB \u7528\u4e8e\u6821\u9a8c\"\n    )\n    range_header = f\"bytes=0-{PARTIAL_SIZE - 1}\"\n    download_mode = \"partial\"\n    target_filename = f\"{Path(KEY).stem}.partial{Path(KEY).suffix}\"\nelse:\n    print(\"[INFO] \u6587\u4ef6\u5927\u5c0f\u5728\u9608\u503c\u4ee5\u4e0b\uff0c\u5c06\u8fdb\u884c\u5168\u91cf\u4e0b\u8f7d\")\n    range_header = None\n    download_mode = \"full\"\n    target_filename = Path(KEY).name\n\n# ============================================================\n# 4. \u6267\u884c\u4e0b\u8f7d\n# ============================================================\n\nLOCAL_DIR.mkdir(parents=True, exist_ok=True)\nlocal_path = LOCAL_DIR / target_filename\n\nprint(f\"[INFO] \u4e0b\u8f7d\u6a21\u5f0f: {download_mode}\")\nprint(f\"[INFO] \u4fdd\u5b58\u8def\u5f84: {local_path}\")\n\ntry:\n    if range_header:\n        response = client.get_object(\n            Bucket=BUCKET,\n            Key=KEY,\n            Range=range_header,\n        )\n    else:\n        response = client.get_object(\n            Bucket=BUCKET,\n            Key=KEY,\n        )\n\n    response[\"Body\"].get_stream_to_file(str(local_path))\n\nexcept CosServiceError as e:\n    print(f\"[ERROR] \u4e0b\u8f7d\u5931\u8d25 - \u670d\u52a1\u7aef\u9519\u8bef\")\n    print(f\"  \u9519\u8bef\u7801: {e.get_error_code()}\")\n    print(f\"  \u9519\u8bef\u4fe1\u606f: {e.get_error_msg()}\")\n    print(f\"  HTTP \u72b6\u6001\u7801: {e.get_status_code()}\")\n    print(f\"  Request ID: {e.get_request_id()}\")\n    sys.exit(1)\nexcept CosClientError as e:\n    print(f\"[ERROR] \u4e0b\u8f7d\u5931\u8d25 - \u5ba2\u6237\u7aef\u9519\u8bef: {e}\")\n    sys.exit(1)\n\n# ============================================================\n# 5. \u6821\u9a8c\u4e0b\u8f7d\u7ed3\u679c\n# ============================================================\n\ndownloaded_size = local_path.stat().st_size\nprint(f\"[INFO] \u4e0b\u8f7d\u5b8c\u6210\")\nprint(f\"  \u672c\u5730\u6587\u4ef6\u5927\u5c0f: {downloaded_size:,} bytes ({downloaded_size / (1024**2):.2f} MB)\")\n\nif download_mode == \"partial\":\n    expected = PARTIAL_SIZE\n    if downloaded_size == expected:\n        print(f\"[OK] \u6821\u9a8c\u901a\u8fc7: \u4e0b\u8f7d\u5927\u5c0f ({downloaded_size:,}) \u4e0e\u9884\u671f ({expected:,}) \u4e00\u81f4\")\n    else:\n        print(\n            f\"[WARN] \u5927\u5c0f\u4e0d\u5339\u914d: \u9884\u671f {expected:,} bytes\uff0c\u5b9e\u9645 {downloaded_size:,} bytes\"\n        )\nelse:\n    if downloaded_size == file_size:\n        print(f\"[OK] \u6821\u9a8c\u901a\u8fc7: \u4e0b\u8f7d\u5927\u5c0f\u4e0e\u8fdc\u7a0b\u6587\u4ef6\u5927\u5c0f\u4e00\u81f4 ({file_size:,} bytes)\")\n    else:\n        print(\n            f\"[WARN] \u5927\u5c0f\u4e0d\u5339\u914d: \u8fdc\u7a0b {file_size:,} bytes\uff0c\u672c\u5730 {downloaded_size:,} bytes\"\n        )\n\nprint(f\"[INFO] \u6587\u4ef6\u5df2\u4fdd\u5b58\u81f3: {local_path.resolve()}\")\n"}, {"name": "summary.md", "type": "text", "content": "# COS \u6587\u4ef6\u4e0b\u8f7d\u811a\u672c\u8bf4\u660e\n\n## \u529f\u80fd\u6982\u8ff0\n\n\u672c\u811a\u672c\u7528\u4e8e\u4ece\u817e\u8baf\u4e91 COS \u5b58\u50a8\u6876 `data-backup-1250000000` \u4e2d\u4e0b\u8f7d `backups/db-2026-07-25.tar.gz` \u6587\u4ef6\u5230\u672c\u5730 `./downloads/` \u76ee\u5f55\u3002\n\n## \u6838\u5fc3\u903b\u8f91\n\n1. **\u5ba2\u6237\u7aef\u521d\u59cb\u5316**\uff1a\u4ece `.env` \u6587\u4ef6\u6216\u73af\u5883\u53d8\u91cf\u4e2d\u8bfb\u53d6 `TENCENT_SECRET_ID`\u3001`TENCENT_SECRET_KEY`\u3001`TENCENT_COS_REGION` \u7b49\u914d\u7f6e\uff0c\u521d\u59cb\u5316 COS \u5ba2\u6237\u7aef\uff08\u4f7f\u7528 HTTPS\u300130 \u79d2\u8d85\u65f6\u3001\u8fde\u63a5\u6c60\u7b49\u53c2\u6570\uff09\u3002\n\n2. **\u6587\u4ef6\u5927\u5c0f\u68c0\u67e5**\uff1a\u901a\u8fc7 `head_object` API \u67e5\u8be2\u8fdc\u7a0b\u6587\u4ef6\u5143\u4fe1\u606f\uff0c\u83b7\u53d6 `Content-Length` \u5224\u65ad\u6587\u4ef6\u5927\u5c0f\uff0c\u907f\u514d\u76f2\u76ee\u4e0b\u8f7d\u8d85\u5927\u6587\u4ef6\u3002\n\n3. **\u667a\u80fd\u4e0b\u8f7d\u7b56\u7565**\uff1a\n   - \u6587\u4ef6\u5c0f\u4e8e\u7b49\u4e8e 1GB\uff1a\u5168\u91cf\u4e0b\u8f7d\uff0c\u4fdd\u5b58\u539f\u59cb\u6587\u4ef6\u540d\u3002\n   - \u6587\u4ef6\u5927\u4e8e 1GB\uff1a\u53ea\u4e0b\u8f7d\u524d 512MB\uff08\u901a\u8fc7 `Range: bytes=0-536870911` \u8303\u56f4\u4e0b\u8f7d\uff09\uff0c\u6587\u4ef6\u540d\u6dfb\u52a0 `.partial` \u6807\u8bc6\uff0c\u7528\u4e8e\u5feb\u901f\u6821\u9a8c\u3002\n\n4. **\u9519\u8bef\u5904\u7406**\uff1a\u6355\u83b7\u4e24\u7c7b\u5f02\u5e38 \u2014\u2014 `CosServiceError`\uff08\u670d\u52a1\u7aef\u9519\u8bef\uff0c\u542b\u9519\u8bef\u7801\u3001\u72b6\u6001\u7801\u3001Request ID\uff09\u548c `CosClientError`\uff08\u5ba2\u6237\u7aef\u7f51\u7edc/\u8d85\u65f6\u9519\u8bef\uff09\uff0c\u5747\u8f93\u51fa\u8be6\u7ec6\u9519\u8bef\u4fe1\u606f\u540e\u9000\u51fa\u3002\n\n5. **\u7ed3\u679c\u6821\u9a8c**\uff1a\u4e0b\u8f7d\u5b8c\u6210\u540e\u5bf9\u6bd4\u672c\u5730\u6587\u4ef6\u5927\u5c0f\u4e0e\u9884\u671f\u5927\u5c0f\uff0c\u786e\u8ba4\u4e0b\u8f7d\u5b8c\u6574\u6027\u3002\n\n## \u4f7f\u7528\u65b9\u5f0f\n\n```bash\n# 1. \u786e\u4fdd\u5df2\u5b89\u88c5\u4f9d\u8d56\nuv add cos-python-sdk-v5 python-dotenv\n\n# 2. \u914d\u7f6e\u5bc6\u94a5\uff08.env \u6587\u4ef6\u6216\u73af\u5883\u53d8\u91cf\uff09\n# TENCENT_SECRET_ID=...\n# TENCENT_SECRET_KEY=...\n# TENCENT_COS_REGION=ap-beijing  # \u53ef\u9009\n\n# 3. \u8fd0\u884c\u811a\u672c\npython download_file.py\n```\n"}], "grading": {"config": "with_skill", "total_assertions": 8, "passed": 8, "failed": 0, "pass_rate": 1.0, "expectations": [{"text": "has-head-object: \u4f7f\u7528 head_object \u5148\u68c0\u67e5\u6587\u4ef6\u5927\u5c0f", "passed": true, "evidence": "\u4f7f\u7528 head_object \u68c0\u67e5\u6587\u4ef6"}, {"text": "size-check-logic: \u5305\u542b\u6587\u4ef6\u5927\u5c0f\u5224\u65ad\u903b\u8f91\uff08\u4e0e 1GB \u6bd4\u8f83\uff09", "passed": true, "evidence": "\u68c0\u67e5\u6587\u4ef6\u5927\u5c0f"}, {"text": "range-download: \u8d85\u8fc7 1GB \u65f6\u4f7f\u7528 Range \u53c2\u6570\u8fdb\u884c\u8303\u56f4\u4e0b\u8f7d", "passed": true, "evidence": "\u4f7f\u7528 Range \u53c2\u6570"}, {"text": "correct-range-bytes: Range \u8bbe\u7f6e\u4e3a bytes=0-536870911\uff08\u524d 512MB\uff09", "passed": true, "evidence": "\u5305\u542b 512MB \u8303\u56f4"}, {"text": "save-to-file: \u4f7f\u7528 get_stream_to_file \u4fdd\u5b58\u5230\u672c\u5730\u8def\u5f84", "passed": true, "evidence": "\u4fdd\u5b58\u5230\u672c\u5730\u6587\u4ef6"}, {"text": "correct-downloads-dir: \u4fdd\u5b58\u5230 ./downloads/ \u76ee\u5f55", "passed": true, "evidence": "\u4fdd\u5b58\u5230 downloads \u76ee\u5f55"}, {"text": "client-init: \u5305\u542b\u5b8c\u6574\u7684\u5ba2\u6237\u7aef\u521d\u59cb\u5316", "passed": true, "evidence": "\u5305\u542b\u5ba2\u6237\u7aef\u521d\u59cb\u5316"}, {"text": "error-handling: \u5305\u542b try/except \u9519\u8bef\u5904\u7406", "passed": true, "evidence": "\u5305\u542b\u9519\u8bef\u5904\u7406"}]}}, {"id": "eval-2-without_skill", "prompt": "\u6211\u9700\u8981\u4ece\u817e\u8baf\u4e91 COS \u7684\u5b58\u50a8\u6876 data-backup-1250000000 \u4e2d\u4e0b\u8f7d backups/db-2026-07-25.tar.gz \u6587\u4ef6\uff0c\u4fdd\u5b58\u5230\u672c\u5730\u7684 ./downloads/ \u76ee\u5f55\u3002\u5982\u679c\u6587\u4ef6\u8d85\u8fc7 1GB\uff0c\u53ea\u9700\u8981\u4e0b\u8f7d\u524d 512MB \u8fdb\u884c\u6821\u9a8c\u5c31\u884c\u3002\u8bf7\u5199\u51fa Python \u4ee3\u7801\u3002", "eval_id": 2, "outputs": [{"name": "download_file.py", "type": "text", "content": "\"\"\"\n\u4ece\u817e\u8baf\u4e91 COS \u5b58\u50a8\u6876\u4e0b\u8f7d\u6587\u4ef6\u3002\n\n\u529f\u80fd\uff1a\n- \u4ece\u73af\u5883\u53d8\u91cf\u8bfb\u53d6 COS \u51ed\u8bc1\uff08SECRET_ID\u3001SECRET_KEY\u3001REGION\uff09\n- \u5148\u7528 head_object \u68c0\u67e5\u6587\u4ef6\u5927\u5c0f\n- \u82e5\u6587\u4ef6\u8d85\u8fc7 1GB\uff0c\u4ec5\u4e0b\u8f7d\u524d 512MB \u7528\u4e8e\u6821\u9a8c\n- \u5426\u5219\u5168\u91cf\u4e0b\u8f7d\n\n\u7528\u6cd5\uff1a\n    1. \u8bbe\u7f6e\u73af\u5883\u53d8\u91cf\uff1a\n       export COS_SECRET_ID=\"your-secret-id\"\n       export COS_SECRET_KEY=\"your-secret-key\"\n       export COS_REGION=\"ap-guangzhou\"\n    2. python download_file.py\n\"\"\"\n\nimport os\nimport sys\nfrom pathlib import Path\n\nfrom qcloud_cos import CosConfig, CosS3Client\nfrom qcloud_cos.cos_exception import CosClientError, CosServiceError\n\n# ---- \u914d\u7f6e ----\nBUCKET = \"data-backup-1250000000\"\nOBJECT_KEY = \"backups/db-2026-07-25.tar.gz\"\nLOCAL_DIR = Path(\"./downloads\")\nONE_GB = 1024 * 1024 * 1024       # 1 GB\nPARTIAL_LIMIT = 512 * 1024 * 1024  # 512 MB\n\n\ndef get_cos_client() -> CosS3Client:\n    \"\"\"\u4ece\u73af\u5883\u53d8\u91cf\u8bfb\u53d6\u51ed\u8bc1\uff0c\u521d\u59cb\u5316\u5e76\u8fd4\u56de COS \u5ba2\u6237\u7aef\u3002\"\"\"\n    secret_id = os.getenv(\"COS_SECRET_ID\")\n    secret_key = os.getenv(\"COS_SECRET_KEY\")\n    region = os.getenv(\"COS_REGION\")\n\n    if not all([secret_id, secret_key, region]):\n        print(\"\u9519\u8bef\uff1a\u7f3a\u5c11\u5fc5\u8981\u7684\u73af\u5883\u53d8\u91cf\uff0c\u8bf7\u8bbe\u7f6e COS_SECRET_ID\u3001COS_SECRET_KEY\u3001COS_REGION\")\n        sys.exit(1)\n\n    config = CosConfig(Region=region, SecretId=secret_id, SecretKey=secret_key)\n    return CosS3Client(config)\n\n\ndef get_file_size(client: CosS3Client) -> int:\n    \"\"\"\u901a\u8fc7 head_object \u83b7\u53d6\u8fdc\u7aef\u6587\u4ef6\u5927\u5c0f\uff08\u5b57\u8282\uff09\u3002\"\"\"\n    try:\n        resp = client.head_object(Bucket=BUCKET, Key=OBJECT_KEY)\n        size = int(resp[\"Content-Length\"])\n        print(f\"\u8fdc\u7aef\u6587\u4ef6\u5927\u5c0f: {size} \u5b57\u8282 ({size / (1024**3):.2f} GB)\")\n        return size\n    except CosServiceError as e:\n        print(f\"head_object \u5931\u8d25: {e.get_error_msg()}\")\n        sys.exit(1)\n    except CosClientError as e:\n        print(f\"\u5ba2\u6237\u7aef\u9519\u8bef: {e}\")\n        sys.exit(1)\n\n\ndef download_full(client: CosS3Client, local_path: Path) -> None:\n    \"\"\"\u5168\u91cf\u4e0b\u8f7d\u6587\u4ef6\u5230\u672c\u5730\u8def\u5f84\u3002\"\"\"\n    try:\n        print(\"\u6587\u4ef6\u5c0f\u4e8e 1GB\uff0c\u5f00\u59cb\u5168\u91cf\u4e0b\u8f7d...\")\n        resp = client.get_object(Bucket=BUCKET, Key=OBJECT_KEY)\n        resp[\"Body\"].get_stream_to_file(str(local_path))\n        print(f\"\u4e0b\u8f7d\u5b8c\u6210 -> {local_path}\")\n    except (CosServiceError, CosClientError) as e:\n        print(f\"\u4e0b\u8f7d\u5931\u8d25: {e}\")\n        sys.exit(1)\n\n\ndef download_partial(client: CosS3Client, local_path: Path, limit: int) -> None:\n    \"\"\"\u8303\u56f4\u4e0b\u8f7d\u6587\u4ef6\u7684\u524d limit \u5b57\u8282\u5230\u672c\u5730\u8def\u5f84\u3002\"\"\"\n    try:\n        range_header = f\"bytes=0-{limit - 1}\"\n        print(f\"\u6587\u4ef6\u8d85\u8fc7 1GB\uff0c\u4ec5\u4e0b\u8f7d\u524d {limit / (1024**2):.0f} MB\uff08Range: {range_header}\uff09...\")\n        resp = client.get_object(Bucket=BUCKET, Key=OBJECT_KEY, Range=range_header)\n        resp[\"Body\"].get_stream_to_file(str(local_path))\n        print(f\"\u4e0b\u8f7d\u5b8c\u6210 -> {local_path}\")\n    except (CosServiceError, CosClientError) as e:\n        print(f\"\u4e0b\u8f7d\u5931\u8d25: {e}\")\n        sys.exit(1)\n\n\ndef main() -> None:\n    client = get_cos_client()\n    file_size = get_file_size(client)\n\n    # \u786e\u4fdd\u672c\u5730\u76ee\u5f55\u5b58\u5728\n    LOCAL_DIR.mkdir(parents=True, exist_ok=True)\n    local_file = LOCAL_DIR / OBJECT_KEY.split(\"/\")[-1]\n\n    if file_size > ONE_GB:\n        download_partial(client, local_file, PARTIAL_LIMIT)\n    else:\n        download_full(client, local_file)\n\n\nif __name__ == \"__main__\":\n    main()\n"}, {"name": "summary.md", "type": "text", "content": "# COS \u6587\u4ef6\u4e0b\u8f7d\u811a\u672c\u8bf4\u660e\n\n## \u5b9e\u73b0\u4e86\u4ec0\u4e48\n\n\u8be5\u811a\u672c\u4ece\u817e\u8baf\u4e91 COS \u5b58\u50a8\u6876 `data-backup-1250000000` \u4e0b\u8f7d\u5bf9\u8c61 `backups/db-2026-07-25.tar.gz` \u5230\u672c\u5730 `./downloads/` \u76ee\u5f55\u3002\n\n## \u6838\u5fc3\u903b\u8f91\n\n1. **\u51ed\u8bc1\u7ba1\u7406**\uff1a\u901a\u8fc7\u73af\u5883\u53d8\u91cf `COS_SECRET_ID`\u3001`COS_SECRET_KEY`\u3001`COS_REGION` \u521d\u59cb\u5316 COS \u5ba2\u6237\u7aef\uff0c\u907f\u514d\u5c06\u5bc6\u94a5\u786c\u7f16\u7801\u5728\u4ee3\u7801\u4e2d\u3002\n2. **\u6587\u4ef6\u5927\u5c0f\u68c0\u67e5**\uff1a\u4f7f\u7528 `head_object` \u63a5\u53e3\u83b7\u53d6\u8fdc\u7aef\u6587\u4ef6\u7684 `Content-Length`\uff0c\u65e0\u9700\u5b9e\u9645\u4e0b\u8f7d\u5373\u53ef\u5224\u65ad\u5927\u5c0f\u3002\n3. **\u6761\u4ef6\u4e0b\u8f7d**\uff1a\n   - \u82e5\u6587\u4ef6 **\u5c0f\u4e8e\u7b49\u4e8e 1GB**\uff0c\u8c03\u7528 `get_object` \u5168\u91cf\u4e0b\u8f7d\u3002\n   - \u82e5\u6587\u4ef6 **\u8d85\u8fc7 1GB**\uff0c\u901a\u8fc7\u8bbe\u7f6e `Range: bytes=0-524287999` \u8bf7\u6c42\u5934\uff0c\u4ec5\u4e0b\u8f7d\u524d **512MB** \u6570\u636e\u7528\u4e8e\u6821\u9a8c\u3002\n4. **\u9519\u8bef\u5904\u7406**\uff1a\u6355\u83b7 `CosServiceError`\uff08\u670d\u52a1\u7aef\u9519\u8bef\uff09\u548c `CosClientError`\uff08\u5ba2\u6237\u7aef\u9519\u8bef\uff09\uff0c\u8f93\u51fa\u9519\u8bef\u4fe1\u606f\u5e76\u9000\u51fa\u3002\n\n## \u4f9d\u8d56\n\n- `cos-python-sdk-v5`\uff08qcloud_cos \u5305\uff09\n"}], "grading": {"config": "without_skill", "total_assertions": 8, "passed": 8, "failed": 0, "pass_rate": 1.0, "expectations": [{"text": "has-head-object: \u4f7f\u7528 head_object \u5148\u68c0\u67e5\u6587\u4ef6\u5927\u5c0f", "passed": true, "evidence": "\u4f7f\u7528 head_object \u68c0\u67e5\u6587\u4ef6"}, {"text": "size-check-logic: \u5305\u542b\u6587\u4ef6\u5927\u5c0f\u5224\u65ad\u903b\u8f91\uff08\u4e0e 1GB \u6bd4\u8f83\uff09", "passed": true, "evidence": "\u68c0\u67e5\u6587\u4ef6\u5927\u5c0f"}, {"text": "range-download: \u8d85\u8fc7 1GB \u65f6\u4f7f\u7528 Range \u53c2\u6570\u8fdb\u884c\u8303\u56f4\u4e0b\u8f7d", "passed": true, "evidence": "\u4f7f\u7528 Range \u53c2\u6570"}, {"text": "correct-range-bytes: Range \u8bbe\u7f6e\u4e3a bytes=0-536870911\uff08\u524d 512MB\uff09", "passed": true, "evidence": "\u5305\u542b 512MB \u8303\u56f4"}, {"text": "save-to-file: \u4f7f\u7528 get_stream_to_file \u4fdd\u5b58\u5230\u672c\u5730\u8def\u5f84", "passed": true, "evidence": "\u4fdd\u5b58\u5230\u672c\u5730\u6587\u4ef6"}, {"text": "correct-downloads-dir: \u4fdd\u5b58\u5230 ./downloads/ \u76ee\u5f55", "passed": true, "evidence": "\u4fdd\u5b58\u5230 downloads \u76ee\u5f55"}, {"text": "client-init: \u5305\u542b\u5b8c\u6574\u7684\u5ba2\u6237\u7aef\u521d\u59cb\u5316", "passed": true, "evidence": "\u5305\u542b\u5ba2\u6237\u7aef\u521d\u59cb\u5316"}, {"text": "error-handling: \u5305\u542b try/except \u9519\u8bef\u5904\u7406", "passed": true, "evidence": "\u5305\u542b\u9519\u8bef\u5904\u7406"}]}}, {"id": "eval-3-with_skill", "prompt": "\u5e2e\u6211\u5199\u4e00\u4e2a Python \u51fd\u6570\uff0c\u904d\u5386 COS \u5b58\u50a8\u6876 media-assets-1250000000 \u4e2d images/ \u524d\u7f00\u4e0b\u7684\u6240\u6709\u6587\u4ef6\uff0c\u628a\u6587\u4ef6\u540d\u548c\u6587\u4ef6\u5927\u5c0f\u6253\u5370\u51fa\u6765\uff0c\u5e76\u4e14\u80fd\u5904\u7406\u5206\u9875\uff08\u4e07\u4e00\u6587\u4ef6\u8d85\u8fc7 1000 \u4e2a\uff09\u3002", "eval_id": 3, "outputs": [{"name": "list_objects.py", "type": "text", "content": "\"\"\"\n\u904d\u5386 COS \u5b58\u50a8\u6876 media-assets-1250000000 \u4e2d images/ \u524d\u7f00\u4e0b\u7684\u6240\u6709\u6587\u4ef6\uff0c\n\u6253\u5370\u6587\u4ef6\u540d\uff08Key\uff09\u548c\u6587\u4ef6\u5927\u5c0f\uff08Size\uff09\uff0c\u5e76\u652f\u6301\u5206\u9875\u5904\u7406\uff08\u6587\u4ef6\u8d85\u8fc7 1000 \u4e2a\u65f6\u81ea\u52a8\u7ffb\u9875\uff09\u3002\n\"\"\"\n\nimport os\nimport sys\nfrom qcloud_cos import CosConfig, CosS3Client\nfrom qcloud_cos import CosServiceError, CosClientError\nfrom dotenv import load_dotenv\n\n\ndef init_client() -> CosS3Client:\n    \"\"\"\u521d\u59cb\u5316 COS \u5ba2\u6237\u7aef\uff0c\u4ece\u73af\u5883\u53d8\u91cf/.env/.cos/config \u8bfb\u53d6\u5bc6\u94a5\u3002\"\"\"\n    load_dotenv()\n\n    secret_id = os.getenv(\"TENCENT_SECRET_ID\")\n    secret_key = os.getenv(\"TENCENT_SECRET_KEY\")\n    region = os.getenv(\"TENCENT_COS_REGION\", \"ap-beijing\")\n\n    if not secret_id or not secret_key:\n        raise RuntimeError(\n            \"COS \u5bc6\u94a5\u672a\u914d\u7f6e\u3002\u8bf7\u8fd0\u884c: python scripts/init_config.py\\n\"\n            \"\u6216\u8bbe\u7f6e\u73af\u5883\u53d8\u91cf TENCENT_SECRET_ID \u548c TENCENT_SECRET_KEY\"\n        )\n\n    config = CosConfig(\n        Region=region,\n        SecretId=secret_id,\n        SecretKey=secret_key,\n        Scheme=\"https\",\n        Timeout=30,\n        PoolConnections=10,\n        PoolMaxSize=10,\n    )\n    return CosS3Client(config)\n\n\ndef list_objects_by_prefix(\n    client: CosS3Client,\n    bucket: str,\n    prefix: str,\n    max_keys: int = 1000,\n) -> None:\n    \"\"\"\u5206\u9875\u904d\u5386\u6307\u5b9a\u524d\u7f00\u4e0b\u7684\u6240\u6709\u5bf9\u8c61\uff0c\u6253\u5370 Key \u548c Size\u3002\n\n    Args:\n        client: COS \u5ba2\u6237\u7aef\u5b9e\u4f8b\u3002\n        bucket: \u5b58\u50a8\u6876\u540d\u79f0\uff08\u542b APPID\uff0c\u5982 media-assets-1250000000\uff09\u3002\n        prefix: \u5bf9\u8c61\u952e\u524d\u7f00\uff0c\u5982 images/\u3002\n        max_keys: \u5355\u6b21\u8bf7\u6c42\u8fd4\u56de\u7684\u6700\u5927\u6761\u76ee\u6570\uff0c\u9ed8\u8ba4 1000\u3002\n    \"\"\"\n    marker = \"\"\n    page = 1\n    total_count = 0\n    total_size = 0\n\n    while True:\n        try:\n            response = client.list_objects(\n                Bucket=bucket,\n                Prefix=prefix,\n                Marker=marker,\n                MaxKeys=max_keys,\n            )\n        except CosServiceError as e:\n            print(f\"\u670d\u52a1\u7aef\u9519\u8bef: {e.get_error_code()} - {e.get_error_msg()}\")\n            print(f\"HTTP \u72b6\u6001\u7801: {e.get_status_code()}\")\n            print(f\"Request ID: {e.get_request_id()}\")\n            sys.exit(1)\n        except CosClientError as e:\n            print(f\"\u5ba2\u6237\u7aef\u9519\u8bef: {e}\")\n            sys.exit(1)\n\n        if \"Contents\" in response:\n            for obj in response[\"Contents\"]:\n                key = obj[\"Key\"]\n                size = obj[\"Size\"]\n                print(f\"{key}  {size}\")\n                total_count += 1\n                total_size += size\n        else:\n            print(f\"\u524d\u7f00 '{prefix}' \u4e0b\u6ca1\u6709\u627e\u5230\u4efb\u4f55\u6587\u4ef6\u3002\")\n            return\n\n        # \u68c0\u67e5\u662f\u5426\u8fd8\u6709\u66f4\u591a\u6570\u636e\n        if response[\"IsTruncated\"] == \"false\":\n            break\n\n        marker = response[\"NextMarker\"]\n        page += 1\n\n    print(f\"\\n\u603b\u8ba1: {total_count} \u4e2a\u6587\u4ef6, \u603b\u5927\u5c0f {total_size} bytes \"\n          f\"({total_size / 1024 / 1024:.2f} MB)\")\n\n\ndef main() -> None:\n    bucket = \"media-assets-1250000000\"\n    prefix = \"images/\"\n\n    print(f\"\u6b63\u5728\u904d\u5386\u5b58\u50a8\u6876 {bucket} \u4e2d\u524d\u7f00\u4e3a '{prefix}' \u7684\u6587\u4ef6...\\n\")\n\n    client = init_client()\n    list_objects_by_prefix(client, bucket, prefix)\n\n\nif __name__ == \"__main__\":\n    main()\n"}, {"name": "summary.md", "type": "text", "content": "# \u4ee3\u7801\u8bf4\u660e\n\n## \u529f\u80fd\u6982\u8ff0\n\n`list_objects.py` \u5b9e\u73b0\u4e86\u4e00\u4e2a\u904d\u5386\u817e\u8baf\u4e91 COS \u5b58\u50a8\u6876\u6587\u4ef6\u7684\u5de5\u5177\u811a\u672c\u3002\n\n### \u505a\u4e86\u4ec0\u4e48\n\n1. **\u521d\u59cb\u5316 COS \u5ba2\u6237\u7aef**\uff1a\u4ece `.env` \u6587\u4ef6\u3001`~/.cos/config` \u6216\u7cfb\u7edf\u73af\u5883\u53d8\u91cf\u4e2d\u8bfb\u53d6 `TENCENT_SECRET_ID`\u3001`TENCENT_SECRET_KEY`\u3001`TENCENT_COS_REGION` \u914d\u7f6e\uff0c\u521b\u5efa `CosS3Client` \u5b9e\u4f8b\u3002\n\n2. **\u5206\u9875\u904d\u5386\u6587\u4ef6**\uff1a\u4f7f\u7528 `list_objects` API\uff0c\u901a\u8fc7 `Marker` \u53c2\u6570\u5b9e\u73b0\u5206\u9875\u5faa\u73af\u3002\u6bcf\u6b21\u8bf7\u6c42\u6700\u591a\u8fd4\u56de 1000 \u6761\u8bb0\u5f55\uff0c\u5f53 `IsTruncated` \u4e3a `true` \u65f6\u81ea\u52a8\u7ffb\u4e0b\u4e00\u9875\uff0c\u76f4\u5230\u904d\u5386\u5b8c\u6240\u6709\u6587\u4ef6\u3002\n\n3. **\u6253\u5370\u6587\u4ef6\u4fe1\u606f**\uff1a\u5bf9\u6bcf\u4e2a\u6587\u4ef6\u8f93\u51fa\u5176 `Key`\uff08\u5bf9\u8c61\u8def\u5f84\u540d\uff09\u548c `Size`\uff08\u6587\u4ef6\u5927\u5c0f\uff0c\u5355\u4f4d bytes\uff09\uff0c\u5e76\u5728\u6700\u540e\u6c47\u603b\u6587\u4ef6\u603b\u6570\u548c\u603b\u5927\u5c0f\u3002\n\n4. **\u9519\u8bef\u5904\u7406**\uff1a\u6355\u83b7 `CosServiceError`\uff08\u670d\u52a1\u7aef\u9519\u8bef\uff0c\u5982\u6743\u9650\u4e0d\u8db3\uff09\u548c `CosClientError`\uff08\u5ba2\u6237\u7aef\u9519\u8bef\uff0c\u5982\u7f51\u7edc\u8d85\u65f6\uff09\uff0c\u6253\u5370\u8be6\u7ec6\u9519\u8bef\u4fe1\u606f\u540e\u9000\u51fa\u3002\n\n### \u914d\u7f6e\u8981\u6c42\n\n\u8fd0\u884c\u524d\u9700\u914d\u7f6e\u4ee5\u4e0b\u73af\u5883\u53d8\u91cf\uff08\u53ef\u901a\u8fc7\u9879\u76ee\u6839\u76ee\u5f55 `.env` \u6587\u4ef6\u6216\u7cfb\u7edf\u73af\u5883\u53d8\u91cf\u8bbe\u7f6e\uff09\uff1a\n\n| \u53d8\u91cf\u540d | \u8bf4\u660e | \u793a\u4f8b |\n|--------|------|------|\n| `TENCENT_SECRET_ID` | \u817e\u8baf\u4e91 API \u5bc6\u94a5 ID | `AKIDxxxxxxxx` |\n| `TENCENT_SECRET_KEY` | \u817e\u8baf\u4e91 API \u5bc6\u94a5 Key | `xxxxxxxx` |\n| `TENCENT_COS_REGION` | \u5b58\u50a8\u6876\u5730\u57df\uff08\u53ef\u9009\uff0c\u9ed8\u8ba4 ap-beijing\uff09 | `ap-guangzhou` |\n\n### \u4f9d\u8d56\n\n- `cos-python-sdk-v5`\n- `python-dotenv`\n\n\u5b89\u88c5\u547d\u4ee4\uff1a`uv add cos-python-sdk-v5 python-dotenv`\n"}], "grading": {"config": "with_skill", "total_assertions": 8, "passed": 7, "failed": 1, "pass_rate": 0.88, "expectations": [{"text": "has-list-objects: \u5305\u542b list_objects \u8c03\u7528", "passed": true, "evidence": "\u5305\u542b list_objects \u8c03\u7528"}, {"text": "prefix-filter: \u4f7f\u7528 Prefix='images/' \u8fc7\u6ee4\u5bf9\u8c61", "passed": true, "evidence": "\u4f7f\u7528 Prefix \u8fc7\u6ee4"}, {"text": "pagination-loop: \u5305\u542b\u5206\u9875\u5faa\u73af\uff08while \u5faa\u73af + Marker \u673a\u5236\uff09", "passed": true, "evidence": "\u5305\u542b\u5206\u9875\u5faa\u73af"}, {"text": "is-truncated-check: \u68c0\u67e5 IsTruncated \u5224\u65ad\u662f\u5426\u8fd8\u6709\u66f4\u591a\u6570\u636e", "passed": true, "evidence": "\u68c0\u67e5 IsTruncated"}, {"text": "prints-key-size: \u6253\u5370\u6bcf\u4e2a\u5bf9\u8c61\u7684 Key \u548c Size", "passed": true, "evidence": "\u6253\u5370 Key \u548c Size"}, {"text": "correct-bucket: Bucket \u53c2\u6570\u6b63\u786e\uff1amedia-assets-1250000000", "passed": false, "evidence": "\u672a\u627e\u5230\u6b63\u786e\u7684 Bucket \u540d\u79f0"}, {"text": "client-init: \u5305\u542b\u5b8c\u6574\u7684\u5ba2\u6237\u7aef\u521d\u59cb\u5316", "passed": true, "evidence": "\u5305\u542b\u5ba2\u6237\u7aef\u521d\u59cb\u5316"}, {"text": "wrapped-in-function: \u4ee3\u7801\u5305\u88c5\u5728\u51fd\u6570\u4e2d\u4fbf\u4e8e\u590d\u7528", "passed": true, "evidence": "\u4ee3\u7801\u5305\u88c5\u5728\u51fd\u6570\u4e2d"}]}}, {"id": "eval-3-without_skill", "prompt": "\u5e2e\u6211\u5199\u4e00\u4e2a Python \u51fd\u6570\uff0c\u904d\u5386 COS \u5b58\u50a8\u6876 media-assets-1250000000 \u4e2d images/ \u524d\u7f00\u4e0b\u7684\u6240\u6709\u6587\u4ef6\uff0c\u628a\u6587\u4ef6\u540d\u548c\u6587\u4ef6\u5927\u5c0f\u6253\u5370\u51fa\u6765\uff0c\u5e76\u4e14\u80fd\u5904\u7406\u5206\u9875\uff08\u4e07\u4e00\u6587\u4ef6\u8d85\u8fc7 1000 \u4e2a\uff09\u3002", "eval_id": 3, "outputs": [{"name": "list_objects.py", "type": "text", "content": "\"\"\"\n\u904d\u5386\u817e\u8baf\u4e91 COS \u5b58\u50a8\u6876\u4e2d\u6307\u5b9a\u524d\u7f00\u4e0b\u7684\u6240\u6709\u6587\u4ef6\uff0c\u6253\u5370\u6587\u4ef6\u540d\u548c\u6587\u4ef6\u5927\u5c0f\u3002\n\n\u529f\u80fd\uff1a\n- \u4ece\u73af\u5883\u53d8\u91cf\u8bfb\u53d6\u5bc6\u94a5\u521d\u59cb\u5316 COS \u5ba2\u6237\u7aef\n- \u901a\u8fc7\u5206\u9875\uff08Marker \u673a\u5236\uff09\u904d\u5386\u6240\u6709\u5bf9\u8c61\uff0c\u81ea\u52a8\u5904\u7406\u8d85\u8fc7 1000 \u4e2a\u6587\u4ef6\u7684\u60c5\u51b5\n- \u6253\u5370\u6bcf\u4e2a\u6587\u4ef6\u7684 Key \u548c Size\n- \u5305\u542b\u5b8c\u5584\u7684\u9519\u8bef\u5904\u7406\n\n\u73af\u5883\u53d8\u91cf\u8981\u6c42\uff1a\n    COS_SECRET_ID: \u817e\u8baf\u4e91 SecretId\n    COS_SECRET_KEY: \u817e\u8baf\u4e91 SecretKey\n\"\"\"\n\nimport os\nimport sys\nfrom typing import Optional\n\nfrom qcloud_cos import CosClientError, CosConfig, CosS3Client, CosServiceError\n\n\ndef init_cos_client(region: str = \"ap-guangzhou\") -> CosS3Client:\n    \"\"\"\n    \u4ece\u73af\u5883\u53d8\u91cf\u8bfb\u53d6\u5bc6\u94a5\uff0c\u521d\u59cb\u5316\u5e76\u8fd4\u56de COS \u5ba2\u6237\u7aef\u3002\n\n    Args:\n        region: \u5b58\u50a8\u6876\u6240\u5728\u5730\u57df\uff0c\u9ed8\u8ba4\u5e7f\u5dde\n\n    Returns:\n        \u521d\u59cb\u5316\u597d\u7684 CosS3Client \u5b9e\u4f8b\n\n    Raises:\n        ValueError: \u7f3a\u5c11\u5fc5\u8981\u7684\u73af\u5883\u53d8\u91cf\u65f6\u629b\u51fa\n    \"\"\"\n    secret_id: Optional[str] = os.getenv(\"COS_SECRET_ID\")\n    secret_key: Optional[str] = os.getenv(\"COS_SECRET_KEY\")\n\n    if not secret_id or not secret_key:\n        raise ValueError(\n            \"\u7f3a\u5c11\u5fc5\u8981\u7684\u73af\u5883\u53d8\u91cf\uff0c\u8bf7\u8bbe\u7f6e COS_SECRET_ID \u548c COS_SECRET_KEY\u3002\\n\"\n            \"\u793a\u4f8b\uff1a\\n\"\n            \"  export COS_SECRET_ID=your-secret-id\\n\"\n            \"  export COS_SECRET_KEY=your-secret-key\"\n        )\n\n    config = CosConfig(\n        Region=region,\n        SecretId=secret_id,\n        SecretKey=secret_key,\n    )\n    return CosS3Client(config)\n\n\ndef list_objects_with_pagination(\n    client: CosS3Client,\n    bucket: str,\n    prefix: str,\n    max_keys: int = 1000,\n) -> list[dict]:\n    \"\"\"\n    \u5206\u9875\u904d\u5386 COS \u5b58\u50a8\u6876\u4e2d\u6307\u5b9a\u524d\u7f00\u4e0b\u7684\u6240\u6709\u6587\u4ef6\u3002\n\n    \u901a\u8fc7 Marker \u673a\u5236\u5b9e\u73b0\u5206\u9875\uff1a\n    - \u6bcf\u6b21\u8bf7\u6c42\u6700\u591a\u8fd4\u56de max_keys \u6761\u8bb0\u5f55\n    - \u5982\u679c IsTruncated \u4e3a True\uff0c\u5219\u4f7f\u7528 NextMarker \u7ee7\u7eed\u8bf7\u6c42\n    - \u5faa\u73af\u76f4\u5230\u6240\u6709\u6587\u4ef6\u904d\u5386\u5b8c\u6bd5\n\n    Args:\n        client: COS \u5ba2\u6237\u7aef\u5b9e\u4f8b\n        bucket: \u5b58\u50a8\u6876\u540d\u79f0\uff08\u683c\u5f0f\uff1abucketname-appid\uff09\n        prefix: \u5bf9\u8c61\u952e\u524d\u7f00\uff0c\u7528\u4e8e\u8fc7\u6ee4\u6587\u4ef6\n        max_keys: \u5355\u6b21\u8bf7\u6c42\u6700\u591a\u8fd4\u56de\u7684\u5bf9\u8c61\u6570\u91cf\uff08\u6700\u5927 1000\uff09\n\n    Returns:\n        \u6240\u6709\u5339\u914d\u6587\u4ef6\u7684\u5b57\u5178\u5217\u8868\uff0c\u6bcf\u4e2a\u5b57\u5178\u5305\u542b Key \u548c Size \u7b49\u5b57\u6bb5\n    \"\"\"\n    all_objects: list[dict] = []\n    marker: str = \"\"\n    page_num: int = 0\n\n    while True:\n        page_num += 1\n        try:\n            response = client.list_objects(\n                Bucket=bucket,\n                Prefix=prefix,\n                Marker=marker,\n                MaxKeys=max_keys,\n            )\n        except CosServiceError as e:\n            print(f\"[\u9519\u8bef] COS \u670d\u52a1\u8fd4\u56de\u9519\u8bef (\u7b2c {page_num} \u9875): {e}\", file=sys.stderr)\n            break\n        except CosClientError as e:\n            print(f\"[\u9519\u8bef] COS \u5ba2\u6237\u7aef\u9519\u8bef (\u7b2c {page_num} \u9875): {e}\", file=sys.stderr)\n            break\n\n        contents = response.get(\"Contents\", [])\n        if not contents:\n            print(f\"[\u4fe1\u606f] \u7b2c {page_num} \u9875\u8fd4\u56de 0 \u6761\u8bb0\u5f55\uff0c\u53ef\u80fd\u662f\u524d\u7f00\u4e0b\u6ca1\u6709\u66f4\u591a\u6587\u4ef6\u3002\")\n            break\n\n        all_objects.extend(contents)\n        print(\n            f\"[\u5206\u9875] \u7b2c {page_num} \u9875\u83b7\u53d6 {len(contents)} \u6761\u8bb0\u5f55 \"\n            f\"(\u7d2f\u8ba1 {len(all_objects)} \u6761)\"\n        )\n\n        # \u68c0\u67e5\u662f\u5426\u8fd8\u6709\u66f4\u591a\u8bb0\u5f55\n        if response.get(\"IsTruncated\") == \"true\":\n            marker = response.get(\"NextMarker\", \"\")\n            if not marker and contents:\n                # \u67d0\u4e9b\u60c5\u51b5\u4e0b SDK \u53ef\u80fd\u4e0d\u8fd4\u56de NextMarker\uff0c\n                # \u6b64\u65f6\u7528\u672c\u6b21\u8fd4\u56de\u7684\u6700\u540e\u4e00\u6761\u8bb0\u5f55\u7684 Key \u4f5c\u4e3a\u4e0b\u4e00\u9875\u7684 Marker\n                marker = contents[-1][\"Key\"]\n        else:\n            print(f\"[\u5b8c\u6210] \u6240\u6709\u6587\u4ef6\u5df2\u904d\u5386\u5b8c\u6bd5\uff0c\u5171 {len(all_objects)} \u4e2a\u6587\u4ef6\u3002\")\n            break\n\n    return all_objects\n\n\ndef print_file_list(objects: list[dict]) -> None:\n    \"\"\"\n    \u6253\u5370\u6587\u4ef6\u5217\u8868\uff0c\u683c\u5f0f\u5316\u8f93\u51fa Key \u548c Size\u3002\n\n    Args:\n        objects: \u6587\u4ef6\u5bf9\u8c61\u5b57\u5178\u5217\u8868\uff0c\u6bcf\u4e2a\u5b57\u5178\u5e94\u5305\u542b Key \u548c Size \u5b57\u6bb5\n    \"\"\"\n    if not objects:\n        print(\"[\u7ed3\u679c] \u672a\u627e\u5230\u4efb\u4f55\u6587\u4ef6\u3002\")\n        return\n\n    # \u8ba1\u7b97 Key \u5217\u7684\u6700\u5927\u5bbd\u5ea6\uff0c\u7528\u4e8e\u5bf9\u9f50\u8f93\u51fa\n    max_key_len = max((len(obj.get(\"Key\", \"\")) for obj in objects), default=0)\n    max_key_len = min(max_key_len, 80)  # \u9650\u5236\u6700\u5927\u5bbd\u5ea6\n\n    print(f\"\\n{'Key':<{max_key_len}}  {'Size (Bytes)':>12}\")\n    print(\"-\" * (max_key_len + 15))\n\n    total_size: int = 0\n    for obj in objects:\n        key: str = obj.get(\"Key\", \"N/A\")\n        size: int = obj.get(\"Size\", 0)\n        total_size += size\n\n        # \u8d85\u8fc7\u5bbd\u5ea6\u7684 Key \u622a\u65ad\u663e\u793a\n        display_key = key if len(key) <= max_key_len else key[: max_key_len - 3] + \"...\"\n\n        # \u683c\u5f0f\u5316\u6587\u4ef6\u5927\u5c0f\uff08\u81ea\u52a8\u9009\u62e9\u5408\u9002\u7684\u5355\u4f4d\uff09\n        size_str = format_size(size)\n\n        print(f\"{display_key:<{max_key_len}}  {size_str:>12}\")\n\n    print(\"-\" * (max_key_len + 15))\n    print(f\"{'\u603b\u8ba1':<{max_key_len}}  {format_size(total_size):>12}\")\n    print(f\"\u5171 {len(objects)} \u4e2a\u6587\u4ef6\")\n\n\ndef format_size(size_bytes: int) -> str:\n    \"\"\"\n    \u5c06\u5b57\u8282\u6570\u8f6c\u6362\u4e3a\u53ef\u8bfb\u7684\u6587\u4ef6\u5927\u5c0f\u683c\u5f0f\u3002\n\n    Args:\n        size_bytes: \u6587\u4ef6\u5927\u5c0f\uff08\u5b57\u8282\uff09\n\n    Returns:\n        \u683c\u5f0f\u5316\u540e\u7684\u6587\u4ef6\u5927\u5c0f\u5b57\u7b26\u4e32\uff0c\u5982 \"1.50 KB\"\u3001\"2.00 MB\"\n    \"\"\"\n    if size_bytes < 1024:\n        return f\"{size_bytes} B\"\n    elif size_bytes < 1024 * 1024:\n        return f\"{size_bytes / 1024:.2f} KB\"\n    elif size_bytes < 1024 * 1024 * 1024:\n        return f\"{size_bytes / (1024 * 1024):.2f} MB\"\n    else:\n        return f\"{size_bytes / (1024 * 1024 * 1024):.2f} GB\"\n\n\ndef main() -> None:\n    \"\"\"\n    \u4e3b\u51fd\u6570\uff1a\u521d\u59cb\u5316 COS \u5ba2\u6237\u7aef\uff0c\u5206\u9875\u904d\u5386\u6307\u5b9a\u524d\u7f00\u4e0b\u7684\u6587\u4ef6\u5e76\u6253\u5370\u3002\n    \"\"\"\n    # \u914d\u7f6e\u53c2\u6570\n    BUCKET = \"media-assets-1250000000\"\n    PREFIX = \"images/\"\n\n    print(f\"=\" * 60)\n    print(f\"COS \u6587\u4ef6\u5217\u8868\u5de5\u5177\")\n    print(f\"\u5b58\u50a8\u6876: {BUCKET}\")\n    print(f\"\u524d\u7f00:   {PREFIX}\")\n    print(f\"=\" * 60)\n\n    try:\n        client = init_cos_client()\n    except ValueError as e:\n        print(f\"[\u81f4\u547d\u9519\u8bef] \u521d\u59cb\u5316\u5931\u8d25: {e}\", file=sys.stderr)\n        sys.exit(1)\n\n    print(\"[\u4fe1\u606f] COS \u5ba2\u6237\u7aef\u521d\u59cb\u5316\u6210\u529f\uff0c\u5f00\u59cb\u904d\u5386\u6587\u4ef6...\\n\")\n\n    objects = list_objects_with_pagination(client, BUCKET, PREFIX)\n    print_file_list(objects)\n\n\nif __name__ == \"__main__\":\n    main()\n"}, {"name": "summary.md", "type": "text", "content": "# COS \u6587\u4ef6\u5217\u8868\u5de5\u5177 -- \u5b9e\u73b0\u8bf4\u660e\n\n## \u529f\u80fd\u6982\u8ff0\n\n\u8be5\u811a\u672c\u4f7f\u7528\u817e\u8baf\u4e91 COS Python SDK (`cos-python-sdk-v5`) \u904d\u5386 COS \u5b58\u50a8\u6876 `media-assets-1250000000` \u4e2d `images/` \u524d\u7f00\u4e0b\u7684\u6240\u6709\u6587\u4ef6\uff0c\u6253\u5370\u6bcf\u4e2a\u6587\u4ef6\u7684\u540d\u79f0\uff08Key\uff09\u548c\u6587\u4ef6\u5927\u5c0f\uff08Size\uff09\uff0c\u5e76\u81ea\u52a8\u5904\u7406\u5206\u9875\u4ee5\u786e\u4fdd\u80fd\u904d\u5386\u8d85\u8fc7 1000 \u4e2a\u6587\u4ef6\u7684\u60c5\u51b5\u3002\n\n## \u5b9e\u73b0\u7ec6\u8282\n\n### 1. \u5ba2\u6237\u7aef\u521d\u59cb\u5316\n- \u4ece\u73af\u5883\u53d8\u91cf `COS_SECRET_ID` \u548c `COS_SECRET_KEY` \u8bfb\u53d6\u817e\u8baf\u4e91 API \u5bc6\u94a5\n- \u9ed8\u8ba4\u8fde\u63a5\u5730\u57df\u4e3a `ap-guangzhou`\uff08\u5e7f\u5dde\uff09\n- \u5bc6\u94a5\u7f3a\u5931\u65f6\u629b\u51fa\u660e\u786e\u7684 `ValueError` \u9519\u8bef\n\n### 2. \u5206\u9875\u5faa\u73af\u903b\u8f91\n- \u4f7f\u7528 COS SDK \u7684 `list_objects` \u65b9\u6cd5\uff0c\u6bcf\u6b21\u8bf7\u6c42\u6700\u591a\u8fd4\u56de 1000 \u6761\u8bb0\u5f55\n- \u901a\u8fc7 **Marker \u5206\u9875\u673a\u5236** \u5b9e\u73b0\u8de8\u9875\u904d\u5386\uff1aSDK \u54cd\u5e94\u4e2d\u7684 `IsTruncated` \u5b57\u6bb5\u4e3a `\"true\"` \u65f6\u8868\u793a\u8fd8\u6709\u66f4\u591a\u6570\u636e\uff0c\u4f7f\u7528 `NextMarker` \u5b57\u6bb5\u4f5c\u4e3a\u4e0b\u4e00\u6b21\u8bf7\u6c42\u7684\u8d77\u59cb\u4f4d\u7f6e\n- \u5982\u679c SDK \u672a\u8fd4\u56de `NextMarker`\uff08\u6781\u7aef\u60c5\u51b5\uff09\uff0c\u81ea\u52a8\u7528\u5f53\u524d\u9875\u6700\u540e\u4e00\u6761\u8bb0\u5f55\u7684 Key \u4f5c\u4e3a\u515c\u5e95\n- \u5faa\u73af\u8c03\u7528\u76f4\u5230 `IsTruncated` \u4e0d\u4e3a `\"true\"` \u6216\u8fd4\u56de\u7a7a\u7ed3\u679c\n\n### 3. \u8f93\u51fa\u683c\u5f0f\u5316\n- \u5bf9\u9f50\u6253\u5370 Key \u548c Size\n- \u6587\u4ef6\u5927\u5c0f\u81ea\u52a8\u8f6c\u6362\u4e3a\u53ef\u8bfb\u683c\u5f0f\uff08B / KB / MB / GB\uff09\n- \u672b\u5c3e\u8f93\u51fa\u6587\u4ef6\u603b\u6570\u548c\u603b\u5927\u5c0f\n\n### 4. \u9519\u8bef\u5904\u7406\n- `CosServiceError`\uff1a\u6355\u83b7 COS \u670d\u52a1\u7aef\u8fd4\u56de\u7684\u9519\u8bef\n- `CosClientError`\uff1a\u6355\u83b7\u5ba2\u6237\u7aef\u5c42\u9762\u7684\u9519\u8bef\uff08\u7f51\u7edc\u8d85\u65f6\u7b49\uff09\n- \u521d\u59cb\u5316\u9636\u6bb5\u7684\u5bc6\u94a5\u6821\u9a8c\uff0c\u907f\u514d\u65e0\u610f\u4e49\u7684\u7a7a\u8bf7\u6c42\n\n## \u8fd0\u884c\u65b9\u5f0f\n\n```bash\n# \u8bbe\u7f6e\u73af\u5883\u53d8\u91cf\nexport COS_SECRET_ID=your-secret-id\nexport COS_SECRET_KEY=your-secret-key\n\n# \u8fd0\u884c\u811a\u672c\npython list_objects.py\n```\n"}], "grading": {"config": "without_skill", "total_assertions": 8, "passed": 7, "failed": 1, "pass_rate": 0.88, "expectations": [{"text": "has-list-objects: \u5305\u542b list_objects \u8c03\u7528", "passed": true, "evidence": "\u5305\u542b list_objects \u8c03\u7528"}, {"text": "prefix-filter: \u4f7f\u7528 Prefix='images/' \u8fc7\u6ee4\u5bf9\u8c61", "passed": true, "evidence": "\u4f7f\u7528 Prefix \u8fc7\u6ee4"}, {"text": "pagination-loop: \u5305\u542b\u5206\u9875\u5faa\u73af\uff08while \u5faa\u73af + Marker \u673a\u5236\uff09", "passed": true, "evidence": "\u5305\u542b\u5206\u9875\u5faa\u73af"}, {"text": "is-truncated-check: \u68c0\u67e5 IsTruncated \u5224\u65ad\u662f\u5426\u8fd8\u6709\u66f4\u591a\u6570\u636e", "passed": true, "evidence": "\u68c0\u67e5 IsTruncated"}, {"text": "prints-key-size: \u6253\u5370\u6bcf\u4e2a\u5bf9\u8c61\u7684 Key \u548c Size", "passed": true, "evidence": "\u6253\u5370 Key \u548c Size"}, {"text": "correct-bucket: Bucket \u53c2\u6570\u6b63\u786e\uff1amedia-assets-1250000000", "passed": false, "evidence": "\u672a\u627e\u5230\u6b63\u786e\u7684 Bucket \u540d\u79f0"}, {"text": "client-init: \u5305\u542b\u5b8c\u6574\u7684\u5ba2\u6237\u7aef\u521d\u59cb\u5316", "passed": true, "evidence": "\u5305\u542b\u5ba2\u6237\u7aef\u521d\u59cb\u5316"}, {"text": "wrapped-in-function: \u4ee3\u7801\u5305\u88c5\u5728\u51fd\u6570\u4e2d\u4fbf\u4e8e\u590d\u7528", "passed": true, "evidence": "\u4ee3\u7801\u5305\u88c5\u5728\u51fd\u6570\u4e2d"}]}}, {"id": "eval-4-with_skill", "prompt": "\u6211\u8981\u5728\u817e\u8baf\u4e91 COS \u4e0a\u521b\u5efa\u4e00\u4e2a\u65b0\u7684\u5b58\u50a8\u6876 my-app-static-1250000000\uff0c\u5730\u57df\u662f ap-shanghai\uff0c\u8bbf\u95ee\u6743\u9650\u8bbe\u4e3a public-read\uff08\u7528\u4e8e\u9759\u6001\u7f51\u7ad9\u6258\u7ba1\uff09\u3002\u521b\u5efa\u5b8c\u540e\u5e2e\u6211\u68c0\u67e5\u4e00\u4e0b\u6876\u662f\u5426\u6210\u529f\u521b\u5efa\u3002\u8bf7\u5199 Python \u4ee3\u7801\u3002", "eval_id": 4, "outputs": [{"name": "create_bucket.py", "type": "text", "content": "\"\"\"\n\u817e\u8baf\u4e91 COS \u521b\u5efa\u5b58\u50a8\u6876\u793a\u4f8b\n\n\u529f\u80fd\uff1a\u5728\u6307\u5b9a\u5730\u57df\u521b\u5efa\u4e00\u4e2a public-read \u7684\u5b58\u50a8\u6876\uff0c\u5e76\u9a8c\u8bc1\u521b\u5efa\u7ed3\u679c\u3002\n\n\u8981\u6c42\uff1a\n- \u4ece\u73af\u5883\u53d8\u91cf\u6216 .env \u6587\u4ef6\u8bfb\u53d6\u817e\u8baf\u4e91\u5bc6\u94a5\n- \u521b\u5efa\u524d\u68c0\u67e5\u5fc5\u8981\u914d\u7f6e\u662f\u5426\u5b58\u5728\n- \u521b\u5efa\u5b58\u50a8\u6876\u5e76\u8bbe\u7f6e\u8bbf\u95ee\u6743\u9650\n- \u901a\u8fc7 head_bucket \u9a8c\u8bc1\u521b\u5efa\u662f\u5426\u6210\u529f\n- \u5b8c\u6574\u7684\u9519\u8bef\u5904\u7406\n\"\"\"\n\nimport os\nimport sys\n\nfrom qcloud_cos import CosConfig, CosS3Client\nfrom qcloud_cos import CosServiceError, CosClientError\nfrom dotenv import load_dotenv\n\n\n# \u2500\u2500 \u914d\u7f6e\u52a0\u8f7d \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n# \u52a0\u8f7d .env \u6587\u4ef6\uff08\u5982\u679c\u5b58\u5728\uff09\nload_dotenv()\n\nsecret_id = os.getenv(\"TENCENT_SECRET_ID\")\nsecret_key = os.getenv(\"TENCENT_SECRET_KEY\")\ndefault_region = os.getenv(\"TENCENT_COS_REGION\", \"ap-beijing\")\n\nif not secret_id or not secret_key:\n    print(\"[ERROR] \u672a\u914d\u7f6e\u817e\u8baf\u4e91\u5bc6\u94a5\u3002\")\n    print(\"\u8bf7\u5c06\u5bc6\u94a5\u5199\u5165 .env \u6587\u4ef6\u6216\u8bbe\u7f6e\u7cfb\u7edf\u73af\u5883\u53d8\u91cf\uff1a\")\n    print(\"  TENCENT_SECRET_ID=AKIDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\")\n    print(\"  TENCENT_SECRET_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\")\n    sys.exit(1)\n\n\n# \u2500\u2500 \u5ba2\u6237\u7aef\u521d\u59cb\u5316 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nconfig = CosConfig(\n    Region=default_region,          # \u9ed8\u8ba4\u5730\u57df\uff08\u521b\u5efa\u6876\u65f6\u4f1a\u8986\u76d6\uff09\n    SecretId=secret_id,\n    SecretKey=secret_key,\n    Scheme=\"https\",\n    Timeout=30,\n    PoolConnections=10,\n    PoolMaxSize=10,\n)\nclient = CosS3Client(config)\n\n\n# \u2500\u2500 \u53c2\u6570 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nBUCKET_NAME = \"my-app-static-1250000000\"\nREGION = \"ap-shanghai\"\nACL = \"public-read\"  # \u7528\u4e8e\u9759\u6001\u7f51\u7ad9\u6258\u7ba1\n\n\n# \u2500\u2500 \u521b\u5efa\u5b58\u50a8\u6876 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nprint(f\"[INFO] \u6b63\u5728\u521b\u5efa\u5b58\u50a8\u6876: {BUCKET_NAME}\")\nprint(f\"       \u5730\u57df: {REGION}\")\nprint(f\"       \u8bbf\u95ee\u6743\u9650: {ACL}\")\n\ntry:\n    response = client.create_bucket(\n        Bucket=BUCKET_NAME,\n        Region=REGION,\n        ACL=ACL,\n    )\n    print(f\"[OK] \u521b\u5efa\u8bf7\u6c42\u5df2\u53d1\u9001\uff0cLocation: {response.get('Location', 'N/A')}\")\nexcept CosServiceError as e:\n    print(f\"[ERROR] COS \u670d\u52a1\u9519\u8bef: {e.get_error_code()} - {e.get_error_msg()}\")\n    print(f\"        HTTP \u72b6\u6001\u7801: {e.get_status_code()}\")\n    print(f\"        Request ID: {e.get_request_id()}\")\n    print(\"\\n\u53ef\u80fd\u539f\u56e0\uff1a\")\n    print(\"  - \u5b58\u50a8\u6876\u540d\u79f0\u5df2\u88ab\u5360\u7528\uff08\u5168\u5c40\u552f\u4e00\uff09\")\n    print(\"  - \u5bc6\u94a5\u6743\u9650\u4e0d\u8db3\uff08\u9700\u8981 PutBucket \u6743\u9650\uff09\")\n    print(\"  - \u5730\u57df\u540d\u79f0\u62fc\u5199\u9519\u8bef\")\n    sys.exit(1)\nexcept CosClientError as e:\n    print(f\"[ERROR] \u5ba2\u6237\u7aef\u9519\u8bef: {e}\")\n    print(\"\\n\u53ef\u80fd\u539f\u56e0\uff1a\")\n    print(\"  - \u7f51\u7edc\u8fde\u63a5\u5931\u8d25\")\n    print(\"  - DNS \u89e3\u6790\u5931\u8d25\")\n    print(\"  - \u8bf7\u6c42\u8d85\u65f6\")\n    sys.exit(1)\n\n\n# \u2500\u2500 \u9a8c\u8bc1\u5b58\u50a8\u6876 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\nprint(f\"\\n[INFO] \u6b63\u5728\u9a8c\u8bc1\u5b58\u50a8\u6876\u662f\u5426\u5b58\u5728...\")\n\ntry:\n    head_response = client.head_bucket(Bucket=BUCKET_NAME)\n    status = head_response.get(\"x-cos-bucket-region\", \"unknown\")\n    print(f\"[OK] \u5b58\u50a8\u6876 {BUCKET_NAME} \u5df2\u6210\u529f\u521b\u5efa\uff01\")\n    print(f\"     \u6240\u5728\u533a\u57df: {status}\")\nexcept CosServiceError as e:\n    if e.get_status_code() == 404:\n        print(f\"[WARN] \u5b58\u50a8\u6876 {BUCKET_NAME} \u4e0d\u5b58\u5728\uff08\u53ef\u80fd\u9700\u8981\u7b49\u5f85\u4f20\u64ad\uff09\")\n    elif e.get_status_code() == 403:\n        print(f\"[OK] \u5b58\u50a8\u6876 {BUCKET_NAME} \u5b58\u5728\u4f46\u65e0\u8bbf\u95ee\u6743\u9650\uff08\u5bf9\u4e8e public-read \u6876\uff0chead_bucket \u53ef\u80fd\u9700\u8981 s3:ListBucket \u6743\u9650\uff09\")\n    else:\n        print(f\"[ERROR] \u67e5\u8be2\u5931\u8d25: {e.get_error_code()} - {e.get_error_msg()}\")\n        print(f\"        HTTP \u72b6\u6001\u7801: {e.get_status_code()}\")\n        sys.exit(1)\nexcept CosClientError as e:\n    print(f\"[ERROR] \u5ba2\u6237\u7aef\u9519\u8bef: {e}\")\n    sys.exit(1)\n"}, {"name": "summary.md", "type": "text", "content": "# \u521b\u5efa COS \u5b58\u50a8\u6876\u811a\u672c\u8bf4\u660e\n\n## \u529f\u80fd\u6982\u8ff0\n\n\u672c\u811a\u672c\u7528\u4e8e\u5728\u817e\u8baf\u4e91 COS\uff08\u5bf9\u8c61\u5b58\u50a8\uff09\u4e0a\u521b\u5efa\u4e00\u4e2a\u65b0\u7684\u5b58\u50a8\u6876\uff0c\u7528\u4e8e\u9759\u6001\u7f51\u7ad9\u6258\u7ba1\u573a\u666f\u3002\n\n## \u5b9e\u73b0\u5185\u5bb9\n\n1. **\u5bc6\u94a5\u52a0\u8f7d**\uff1a\u4ece `.env` \u6587\u4ef6\u6216\u7cfb\u7edf\u73af\u5883\u53d8\u91cf\u4e2d\u8bfb\u53d6 `TENCENT_SECRET_ID` \u548c `TENCENT_SECRET_KEY`\uff0c\u7f3a\u5c11\u4efb\u4e00\u5bc6\u94a5\u65f6\u62a5\u9519\u9000\u51fa\u3002\n\n2. **\u5ba2\u6237\u7aef\u521d\u59cb\u5316**\uff1a\u6309 skill \u6587\u4ef6\u4e2d\u7684\u6807\u51c6\u6a21\u5f0f\uff0c\u521b\u5efa `CosConfig` \u914d\u7f6e\u5bf9\u8c61\u5e76\u521d\u59cb\u5316 `CosS3Client`\uff0c\u4f7f\u7528 HTTPS \u534f\u8bae\u300130 \u79d2\u8d85\u65f6\u3001\u8fde\u63a5\u6c60\u5927\u5c0f\u4e3a 10\u3002\n\n3. **\u521b\u5efa\u5b58\u50a8\u6876**\uff1a\n   - \u6876\u540d\uff1a`my-app-static-1250000000`\n   - \u5730\u57df\uff1a`ap-shanghai`\uff08\u4e0a\u6d77\uff09\n   - \u8bbf\u95ee\u6743\u9650\uff1a`public-read`\uff08\u516c\u5f00\u8bfb\uff0c\u9002\u5408\u9759\u6001\u7f51\u7ad9\u6258\u7ba1\uff09\n\n4. **\u9a8c\u8bc1\u521b\u5efa\u7ed3\u679c**\uff1a\u901a\u8fc7 `head_bucket` \u65b9\u6cd5\u68c0\u67e5\u5b58\u50a8\u6876\u662f\u5426\u5b58\u5728\u53ca\u662f\u5426\u53ef\u8bbf\u95ee\u3002\n\n5. **\u9519\u8bef\u5904\u7406**\uff1a\n   - `CosServiceError`\uff1a\u5904\u7406 COS \u670d\u52a1\u7aef\u8fd4\u56de\u7684\u9519\u8bef\uff08\u5982\u6876\u540d\u51b2\u7a81\u3001\u6743\u9650\u4e0d\u8db3\uff09\n   - `CosClientError`\uff1a\u5904\u7406\u5ba2\u6237\u7aef\u4fa7\u9519\u8bef\uff08\u5982\u7f51\u7edc\u8d85\u65f6\u3001DNS \u95ee\u9898\uff09\n   - 404 \u548c 403 \u72b6\u6001\u7801\u7684\u7279\u6b8a\u5904\u7406\u903b\u8f91\n\n## \u6ce8\u610f\u4e8b\u9879\n\n- \u5b58\u50a8\u6876\u540d\u79f0\u5fc5\u987b\u4ee5 APPID \u7ed3\u5c3e\uff08\u683c\u5f0f\u4e3a `<name>-<APPID>`\uff09\n- `public-read` \u6743\u9650\u610f\u5473\u7740\u4efb\u4f55\u4eba\u53ef\u4ee5\u8bfb\u53d6\u6876\u5185\u7684\u5bf9\u8c61\uff0c\u4e0a\u4f20\u548c\u5220\u9664\u4ecd\u9700\u8981\u5bc6\u94a5\u8ba4\u8bc1\n- `create_bucket` \u4e2d\u7684 `Region` \u53c2\u6570\u7528\u4e8e\u6307\u5b9a\u6570\u636e\u4e2d\u5fc3\u7684\u7269\u7406\u4f4d\u7f6e\n"}], "grading": {"config": "with_skill", "total_assertions": 7, "passed": 7, "failed": 0, "pass_rate": 1.0, "expectations": [{"text": "has-create-bucket: \u5305\u542b create_bucket \u8c03\u7528", "passed": true, "evidence": "\u5305\u542b create_bucket \u8c03\u7528"}, {"text": "correct-bucket-name: Bucket \u540d\u79f0\u6b63\u786e\uff1amy-app-static-1250000000", "passed": true, "evidence": "Bucket \u540d\u79f0\u6b63\u786e"}, {"text": "acl-public-read: \u8bbe\u7f6e\u4e86 ACL='public-read' \u8bbf\u95ee\u6743\u9650", "passed": true, "evidence": "\u8bbe\u7f6e\u4e86 public-read ACL"}, {"text": "has-head-bucket: \u4f7f\u7528 head_bucket \u9a8c\u8bc1\u521b\u5efa\u7ed3\u679c", "passed": true, "evidence": "\u5305\u542b head_bucket \u9a8c\u8bc1"}, {"text": "create-then-verify: \u5148\u521b\u5efa\u518d\u9a8c\u8bc1\u7684\u903b\u8f91\u987a\u5e8f\u6b63\u786e", "passed": true, "evidence": "\u521b\u5efa + \u9a8c\u8bc1\u903b\u8f91\u5b8c\u6574"}, {"text": "client-init: \u5305\u542b\u5b8c\u6574\u7684\u5ba2\u6237\u7aef\u521d\u59cb\u5316", "passed": true, "evidence": "\u5305\u542b\u5ba2\u6237\u7aef\u521d\u59cb\u5316"}, {"text": "error-handling: \u5305\u542b try/except \u9519\u8bef\u5904\u7406\u6216\u72b6\u6001\u7801\u68c0\u67e5", "passed": true, "evidence": "\u5305\u542b\u9519\u8bef\u5904\u7406"}]}}, {"id": "eval-4-without_skill", "prompt": "\u6211\u8981\u5728\u817e\u8baf\u4e91 COS \u4e0a\u521b\u5efa\u4e00\u4e2a\u65b0\u7684\u5b58\u50a8\u6876 my-app-static-1250000000\uff0c\u5730\u57df\u662f ap-shanghai\uff0c\u8bbf\u95ee\u6743\u9650\u8bbe\u4e3a public-read\uff08\u7528\u4e8e\u9759\u6001\u7f51\u7ad9\u6258\u7ba1\uff09\u3002\u521b\u5efa\u5b8c\u540e\u5e2e\u6211\u68c0\u67e5\u4e00\u4e0b\u6876\u662f\u5426\u6210\u529f\u521b\u5efa\u3002\u8bf7\u5199 Python \u4ee3\u7801\u3002", "eval_id": 4, "outputs": [{"name": "create_bucket.py", "type": "text", "content": "\"\"\"\n\u817e\u8baf\u4e91 COS \u5b58\u50a8\u6876\u521b\u5efa\u4e0e\u9a8c\u8bc1\u811a\u672c\n\n\u529f\u80fd\uff1a\n  1. \u4ece\u73af\u5883\u53d8\u91cf\u8bfb\u53d6\u817e\u8baf\u4e91\u5bc6\u94a5\n  2. \u5728\u6307\u5b9a\u5730\u57df\u521b\u5efa COS \u5b58\u50a8\u6876\uff0c\u5e76\u8bbe\u7f6e\u516c\u5171\u8bfb\u8bbf\u95ee\u6743\u9650\uff08\u9002\u7528\u4e8e\u9759\u6001\u7f51\u7ad9\u6258\u7ba1\uff09\n  3. \u901a\u8fc7 head_bucket \u9a8c\u8bc1\u5b58\u50a8\u6876\u662f\u5426\u521b\u5efa\u6210\u529f\n\n\u73af\u5883\u53d8\u91cf\u8981\u6c42\uff1a\n  - TENCENT_SECRET_ID: \u817e\u8baf\u4e91 SecretId\n  - TENCENT_SECRET_KEY: \u817e\u8baf\u4e91 SecretKey\n\n\u4f9d\u8d56\uff1a\n  pip install cos-python-sdk-v5\n\"\"\"\n\nimport os\nimport sys\nimport logging\n\nfrom qcloud_cos import CosConfig, CosS3Client\nfrom qcloud_cos.cos_exception import CosServiceError, CosClientError\n\n\n# ---------------------------------------------------------------------------\n# \u914d\u7f6e\u5e38\u91cf\n# ---------------------------------------------------------------------------\nBUCKET_NAME = \"my-app-static-1250000000\"\nREGION = \"ap-shanghai\"\nACL = \"public-read\"  # \u516c\u5171\u8bfb\uff0c\u9002\u7528\u4e8e\u9759\u6001\u7f51\u7ad9\u6258\u7ba1\n\n# \u4e3a SDK \u5185\u90e8\u65e5\u5fd7\u548c\u81ea\u5b9a\u4e49\u65e5\u5fd7\u914d\u7f6e\u7ea7\u522b\nlogging.basicConfig(level=logging.INFO, format=\"%(asctime)s [%(levelname)s] %(message)s\")\nlogger = logging.getLogger(__name__)\n\n\n# ---------------------------------------------------------------------------\n# \u5ba2\u6237\u7aef\u521d\u59cb\u5316\n# ---------------------------------------------------------------------------\ndef build_client() -> CosS3Client:\n    \"\"\"\u4ece\u73af\u5883\u53d8\u91cf\u8bfb\u53d6\u5bc6\u94a5\uff0c\u521d\u59cb\u5316\u5e76\u8fd4\u56de COS \u5ba2\u6237\u7aef\u3002\"\"\"\n    secret_id = os.getenv(\"TENCENT_SECRET_ID\")\n    secret_key = os.getenv(\"TENCENT_SECRET_KEY\")\n\n    if not secret_id or not secret_key:\n        logger.error(\n            \"\u7f3a\u5c11\u5fc5\u8981\u7684\u73af\u5883\u53d8\u91cf\u3002\u8bf7\u8bbe\u7f6e TENCENT_SECRET_ID \u548c TENCENT_SECRET_KEY\u3002\"\n        )\n        sys.exit(1)\n\n    config = CosConfig(\n        Region=REGION,\n        SecretId=secret_id,\n        SecretKey=secret_key,\n    )\n    return CosS3Client(config)\n\n\n# ---------------------------------------------------------------------------\n# \u521b\u5efa\u5b58\u50a8\u6876\n# ---------------------------------------------------------------------------\ndef create_bucket(client: CosS3Client) -> None:\n    \"\"\"\u521b\u5efa\u6307\u5b9a\u540d\u79f0\u3001\u5730\u57df\u548c ACL \u7684 COS \u5b58\u50a8\u6876\u3002\"\"\"\n    logger.info(\n        \"\u6b63\u5728\u521b\u5efa\u5b58\u50a8\u6876: %s\uff08\u5730\u57df: %s\uff0c\u8bbf\u95ee\u6743\u9650: %s\uff09...\",\n        BUCKET_NAME,\n        REGION,\n        ACL,\n    )\n    try:\n        response = client.create_bucket(\n            Bucket=BUCKET_NAME,\n            Region=REGION,\n            ACL=ACL,\n        )\n        logger.info(\"\u5b58\u50a8\u6876\u521b\u5efa\u8bf7\u6c42\u5df2\u53d1\u9001\u3002\u54cd\u5e94: %s\", response)\n    except CosServiceError as e:\n        # \u4f8b\u5982\u6876\u5df2\u5b58\u5728\uff08BucketAlreadyExists / BucketAlreadyOwnedByYou\uff09\u7b49\u60c5\u51b5\n        logger.error(\n            \"\u521b\u5efa\u5b58\u50a8\u6876\u65f6 COS \u670d\u52a1\u8fd4\u56de\u9519\u8bef\u3002\"\n            \"HTTP \u72b6\u6001\u7801: %s, \u9519\u8bef\u7801: %s, \u9519\u8bef\u4fe1\u606f: %s\",\n            e.get_status_code(),\n            e.get_error_code(),\n            e.get_error_msg(),\n        )\n        raise\n    except CosClientError as e:\n        logger.error(\"\u521b\u5efa\u5b58\u50a8\u6876\u65f6\u5ba2\u6237\u7aef\u53d1\u751f\u9519\u8bef: %s\", e)\n        raise\n\n\n# ---------------------------------------------------------------------------\n# \u9a8c\u8bc1\u5b58\u50a8\u6876\n# ---------------------------------------------------------------------------\ndef verify_bucket(client: CosS3Client) -> None:\n    \"\"\"\u901a\u8fc7 head_bucket \u786e\u8ba4\u5b58\u50a8\u6876\u662f\u5426\u5b58\u5728\u4e14\u53ef\u8bbf\u95ee\u3002\"\"\"\n    logger.info(\"\u6b63\u5728\u9a8c\u8bc1\u5b58\u50a8\u6876\u662f\u5426\u53ef\u8bbf\u95ee: %s...\", BUCKET_NAME)\n    try:\n        response = client.head_bucket(Bucket=BUCKET_NAME)\n        logger.info(\"\u5b58\u50a8\u6876\u9a8c\u8bc1\u6210\u529f\uff01\u5b58\u50a8\u6876 %s \u5df2\u5b58\u5728\u4e14\u53ef\u6b63\u5e38\u8bbf\u95ee\u3002\", BUCKET_NAME)\n        logger.info(\"\u54cd\u5e94\u5934: %s\", response)\n    except CosServiceError as e:\n        logger.error(\n            \"\u9a8c\u8bc1\u5b58\u50a8\u6876\u65f6 COS \u670d\u52a1\u8fd4\u56de\u9519\u8bef\u3002\"\n            \"HTTP \u72b6\u6001\u7801: %s, \u9519\u8bef\u7801: %s, \u9519\u8bef\u4fe1\u606f: %s\",\n            e.get_status_code(),\n            e.get_error_code(),\n            e.get_error_msg(),\n        )\n        raise\n    except CosClientError as e:\n        logger.error(\"\u9a8c\u8bc1\u5b58\u50a8\u6876\u65f6\u5ba2\u6237\u7aef\u53d1\u751f\u9519\u8bef: %s\", e)\n        raise\n\n\n# ---------------------------------------------------------------------------\n# \u4e3b\u6d41\u7a0b\n# ---------------------------------------------------------------------------\ndef main() -> None:\n    logger.info(\"===== \u817e\u8baf\u4e91 COS \u5b58\u50a8\u6876\u521b\u5efa\u5de5\u5177 =====\")\n\n    client = build_client()\n\n    try:\n        create_bucket(client)\n    except (CosServiceError, CosClientError):\n        logger.warning(\"\u5b58\u50a8\u6876\u53ef\u80fd\u5df2\u5b58\u5728\uff0c\u7ee7\u7eed\u5c1d\u8bd5\u9a8c\u8bc1...\")\n\n    try:\n        verify_bucket(client)\n    except (CosServiceError, CosClientError):\n        logger.critical(\"\u5b58\u50a8\u6876\u9a8c\u8bc1\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u914d\u7f6e\u548c\u7f51\u7edc\u3002\")\n        sys.exit(1)\n\n    logger.info(\"===== \u5b8c\u6210 =====\")\n\n\nif __name__ == \"__main__\":\n    main()\n"}, {"name": "summary.md", "type": "text", "content": "# \u4ee3\u7801\u8bf4\u660e\n\n## \u529f\u80fd\u6982\u8ff0\n\n\u672c\u811a\u672c\u4f7f\u7528\u817e\u8baf\u4e91 COS Python SDK (`cos-python-sdk-v5`) \u5b9e\u73b0\u4e86\u4ee5\u4e0b\u529f\u80fd\uff1a\n\n1. **\u5ba2\u6237\u7aef\u521d\u59cb\u5316**\uff1a\u4ece `TENCENT_SECRET_ID` \u548c `TENCENT_SECRET_KEY` \u73af\u5883\u53d8\u91cf\u8bfb\u53d6\u817e\u8baf\u4e91 API \u5bc6\u94a5\uff0c\u6784\u5efa `CosS3Client` \u5ba2\u6237\u7aef\u5b9e\u4f8b\u3002\n2. **\u521b\u5efa\u5b58\u50a8\u6876**\uff1a\u8c03\u7528 `create_bucket` API\uff0c\u5728 `ap-shanghai` \u5730\u57df\u521b\u5efa\u4e00\u4e2a\u540d\u4e3a `my-app-static-1250000000` \u7684\u5b58\u50a8\u6876\uff0c\u5e76\u8bbe\u7f6e\u8bbf\u95ee\u6743\u9650\u4e3a `public-read`\uff08\u516c\u5171\u8bfb\uff0c\u9002\u7528\u4e8e\u9759\u6001\u7f51\u7ad9\u6258\u7ba1\u573a\u666f\uff09\u3002\n3. **\u9a8c\u8bc1\u521b\u5efa\u7ed3\u679c**\uff1a\u901a\u8fc7 `head_bucket` API \u786e\u8ba4\u5b58\u50a8\u6876\u5df2\u6210\u529f\u521b\u5efa\u4e14\u53ef\u6b63\u5e38\u8bbf\u95ee\u3002\n4. **\u9519\u8bef\u5904\u7406**\uff1a\u6355\u83b7 `CosServiceError`\uff08\u670d\u52a1\u7aef\u9519\u8bef\uff0c\u5982\u6876\u5df2\u5b58\u5728\uff09\u548c `CosClientError`\uff08\u5ba2\u6237\u7aef\u9519\u8bef\uff0c\u5982\u7f51\u7edc\u5f02\u5e38\uff09\u4e24\u7c7b\u5f02\u5e38\uff0c\u5e76\u8f93\u51fa\u6e05\u6670\u7684\u9519\u8bef\u65e5\u5fd7\u3002\n\n## \u8fd0\u884c\u65b9\u5f0f\n\n```bash\n# 1. \u5b89\u88c5\u4f9d\u8d56\npip install cos-python-sdk-v5\n\n# 2. \u8bbe\u7f6e\u73af\u5883\u53d8\u91cf\nexport TENCENT_SECRET_ID=\"your-secret-id\"\nexport TENCENT_SECRET_KEY=\"your-secret-key\"\n\n# 3. \u8fd0\u884c\u811a\u672c\npython create_bucket.py\n```\n"}], "grading": {"config": "without_skill", "total_assertions": 7, "passed": 7, "failed": 0, "pass_rate": 1.0, "expectations": [{"text": "has-create-bucket: \u5305\u542b create_bucket \u8c03\u7528", "passed": true, "evidence": "\u5305\u542b create_bucket \u8c03\u7528"}, {"text": "correct-bucket-name: Bucket \u540d\u79f0\u6b63\u786e\uff1amy-app-static-1250000000", "passed": true, "evidence": "Bucket \u540d\u79f0\u6b63\u786e"}, {"text": "acl-public-read: \u8bbe\u7f6e\u4e86 ACL='public-read' \u8bbf\u95ee\u6743\u9650", "passed": true, "evidence": "\u8bbe\u7f6e\u4e86 public-read ACL"}, {"text": "has-head-bucket: \u4f7f\u7528 head_bucket \u9a8c\u8bc1\u521b\u5efa\u7ed3\u679c", "passed": true, "evidence": "\u5305\u542b head_bucket \u9a8c\u8bc1"}, {"text": "create-then-verify: \u5148\u521b\u5efa\u518d\u9a8c\u8bc1\u7684\u903b\u8f91\u987a\u5e8f\u6b63\u786e", "passed": true, "evidence": "\u521b\u5efa + \u9a8c\u8bc1\u903b\u8f91\u5b8c\u6574"}, {"text": "client-init: \u5305\u542b\u5b8c\u6574\u7684\u5ba2\u6237\u7aef\u521d\u59cb\u5316", "passed": true, "evidence": "\u5305\u542b\u5ba2\u6237\u7aef\u521d\u59cb\u5316"}, {"text": "error-handling: \u5305\u542b try/except \u9519\u8bef\u5904\u7406\u6216\u72b6\u6001\u7801\u68c0\u67e5", "passed": true, "evidence": "\u5305\u542b\u9519\u8bef\u5904\u7406"}]}}, {"id": "eval-5-with_skill", "prompt": "\u5e2e\u6211\u5728 Python \u91cc\u751f\u6210\u4e00\u4e2a COS \u6587\u4ef6\u7684\u9884\u7b7e\u540d\u4e0b\u8f7d URL\uff0c\u6587\u4ef6\u5728 my-bucket-1250000000 \u7684 private/reports/audit-2026.pdf\uff0c\u6709\u6548\u671f 2 \u5c0f\u65f6\u3002\u751f\u6210\u7684\u94fe\u63a5\u8981\u5f3a\u5236\u6d4f\u89c8\u5668\u4e0b\u8f7d\uff08\u800c\u4e0d\u662f\u9884\u89c8\uff09\u3002\u8bf7\u5199\u5b8c\u6574\u4ee3\u7801\u3002", "eval_id": 5, "outputs": [{"name": "presigned_url.py", "type": "text", "content": "\"\"\"\n\u751f\u6210\u817e\u8baf\u4e91 COS \u6587\u4ef6\u7684\u9884\u7b7e\u540d\u4e0b\u8f7d URL\u3002\n\n\u529f\u80fd\uff1a\n- \u4ece\u73af\u5883\u53d8\u91cf / .env \u6587\u4ef6\u8bfb\u53d6\u5bc6\u94a5\u548c\u914d\u7f6e\n- \u4e3a\u6307\u5b9a\u6587\u4ef6\u751f\u6210\u9884\u7b7e\u540d\u4e0b\u8f7d\u94fe\u63a5\n- \u94fe\u63a5\u6709\u6548\u671f 2 \u5c0f\u65f6\uff087200 \u79d2\uff09\n- \u901a\u8fc7 Content-Disposition \u5f3a\u5236\u6d4f\u89c8\u5668\u4e0b\u8f7d\uff08\u800c\u975e\u9884\u89c8\uff09\n\"\"\"\n\nimport os\nfrom qcloud_cos import CosConfig, CosS3Client\nfrom qcloud_cos import CosServiceError, CosClientError\nfrom dotenv import load_dotenv\n\n\ndef init_cos_client() -> CosS3Client:\n    \"\"\"\u521d\u59cb\u5316 COS \u5ba2\u6237\u7aef\u3002\n\n    \u6309\u4f18\u5148\u7ea7\u4ece\u4ee5\u4e0b\u6765\u6e90\u8bfb\u53d6\u914d\u7f6e\uff1a\n    1. \u9879\u76ee\u6839\u76ee\u5f55\u7684 .env \u6587\u4ef6\n    2. \u7cfb\u7edf\u73af\u5883\u53d8\u91cf\n\n    Returns:\n        CosS3Client: \u5df2\u914d\u7f6e\u7684 COS \u5ba2\u6237\u7aef\u5b9e\u4f8b\n\n    Raises:\n        RuntimeError: \u5f53\u5bc6\u94a5\u672a\u914d\u7f6e\u65f6\u629b\u51fa\n    \"\"\"\n    load_dotenv()\n\n    secret_id = os.getenv(\"TENCENT_SECRET_ID\")\n    secret_key = os.getenv(\"TENCENT_SECRET_KEY\")\n    region = os.getenv(\"TENCENT_COS_REGION\", \"ap-beijing\")\n\n    if not secret_id or not secret_key:\n        raise RuntimeError(\n            \"COS \u5bc6\u94a5\u672a\u914d\u7f6e\u3002\u8bf7\u5728 .env \u6587\u4ef6\u4e2d\u8bbe\u7f6e TENCENT_SECRET_ID \u548c TENCENT_SECRET_KEY\uff0c\"\n            \"\u6216\u5c06\u5176\u8bbe\u4e3a\u7cfb\u7edf\u73af\u5883\u53d8\u91cf\u3002\"\n        )\n\n    config = CosConfig(\n        Region=region,\n        SecretId=secret_id,\n        SecretKey=secret_key,\n        Scheme=\"https\",\n        Timeout=30,\n        PoolConnections=10,\n        PoolMaxSize=10,\n    )\n\n    return CosS3Client(config)\n\n\ndef get_presigned_download_url(\n    client: CosS3Client,\n    bucket: str,\n    key: str,\n    expired: int = 7200,\n    force_download: bool = True,\n    download_filename: str | None = None,\n) -> str:\n    \"\"\"\u751f\u6210 COS \u6587\u4ef6\u7684\u9884\u7b7e\u540d\u4e0b\u8f7d URL\u3002\n\n    Args:\n        client: \u5df2\u521d\u59cb\u5316\u7684 COS \u5ba2\u6237\u7aef\u5b9e\u4f8b\n        bucket: \u5b58\u50a8\u6876\u540d\u79f0\uff08\u542b APPID\uff0c\u5982 my-bucket-1250000000\uff09\n        key: COS \u4e0a\u7684\u6587\u4ef6\u8def\u5f84\uff08\u5982 private/reports/audit-2026.pdf\uff09\n        expired: \u94fe\u63a5\u6709\u6548\u671f\uff0c\u5355\u4f4d\u79d2\uff0c\u9ed8\u8ba4 7200\uff082 \u5c0f\u65f6\uff09\n        force_download: \u662f\u5426\u5f3a\u5236\u6d4f\u89c8\u5668\u4e0b\u8f7d\uff08\u800c\u975e\u9884\u89c8\uff09\uff0c\u9ed8\u8ba4 True\n        download_filename: \u4e0b\u8f7d\u65f6\u7684\u6587\u4ef6\u540d\uff0c\u82e5\u4e3a None \u5219\u4f7f\u7528\u539f\u59cb\u6587\u4ef6\u540d\n\n    Returns:\n        str: \u9884\u7b7e\u540d\u4e0b\u8f7d URL\n\n    Raises:\n        CosClientError: \u5ba2\u6237\u7aef\u9519\u8bef\uff08\u5982\u7f51\u7edc\u8d85\u65f6\uff09\n        CosServiceError: \u670d\u52a1\u7aef\u9519\u8bef\uff08\u5982\u6743\u9650\u4e0d\u8db3\u3001\u6587\u4ef6\u4e0d\u5b58\u5728\uff09\n    \"\"\"\n    params: dict[str, str] = {}\n\n    if force_download:\n        # \u8bbe\u7f6e Content-Disposition \u4e3a attachment\uff0c\u5f3a\u5236\u6d4f\u89c8\u5668\u4e0b\u8f7d\n        filename = download_filename or os.path.basename(key)\n        params[\"response-content-disposition\"] = (\n            f\"attachment; filename=\\\"{filename}\\\"\"\n        )\n\n    try:\n        presigned_url = client.get_presigned_download_url(\n            Bucket=bucket,\n            Key=key,\n            Expired=expired,\n            Params=params if params else None,\n        )\n        return presigned_url\n    except CosServiceError as e:\n        print(f\"[\u670d\u52a1\u9519\u8bef] \u9519\u8bef\u7801: {e.get_error_code()}\")\n        print(f\"[\u670d\u52a1\u9519\u8bef] \u9519\u8bef\u4fe1\u606f: {e.get_error_msg()}\")\n        print(f\"[\u670d\u52a1\u9519\u8bef] HTTP \u72b6\u6001\u7801: {e.get_status_code()}\")\n        print(f\"[\u670d\u52a1\u9519\u8bef] Request ID: {e.get_request_id()}\")\n        raise\n    except CosClientError as e:\n        print(f\"[\u5ba2\u6237\u7aef\u9519\u8bef] {e}\")\n        raise\n\n\ndef main() -> None:\n    \"\"\"\u4e3b\u51fd\u6570\uff1a\u751f\u6210\u9884\u7b7e\u540d\u4e0b\u8f7d URL \u5e76\u6253\u5370\u3002\"\"\"\n    # \u521d\u59cb\u5316\u5ba2\u6237\u7aef\n    try:\n        client = init_cos_client()\n    except RuntimeError as e:\n        print(f\"\u521d\u59cb\u5316\u5931\u8d25: {e}\")\n        return\n\n    # \u76ee\u6807\u6587\u4ef6\u914d\u7f6e\n    BUCKET = \"my-bucket-1250000000\"\n    KEY = \"private/reports/audit-2026.pdf\"\n    EXPIRED = 7200  # 2 \u5c0f\u65f6\n\n    print(f\"\u5b58\u50a8\u6876: {BUCKET}\")\n    print(f\"\u6587\u4ef6\u8def\u5f84: {KEY}\")\n    print(f\"\u6709\u6548\u671f: {EXPIRED} \u79d2\uff08{EXPIRED // 3600} \u5c0f\u65f6\uff09\")\n    print(f\"\u5f3a\u5236\u4e0b\u8f7d: \u662f\")\n    print()\n\n    # \u751f\u6210\u9884\u7b7e\u540d\u4e0b\u8f7d URL\n    try:\n        presigned_url = get_presigned_download_url(\n            client=client,\n            bucket=BUCKET,\n            key=KEY,\n            expired=EXPIRED,\n            force_download=True,\n            download_filename=\"audit-2026.pdf\",\n        )\n        print(\"\u9884\u7b7e\u540d\u4e0b\u8f7d URL \u751f\u6210\u6210\u529f\uff01\")\n        print(f\"URL: {presigned_url}\")\n    except (CosServiceError, CosClientError) as e:\n        print(f\"\u751f\u6210\u9884\u7b7e\u540d URL \u5931\u8d25: {e}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"}], "grading": {"config": "with_skill", "total_assertions": 6, "passed": 6, "failed": 0, "pass_rate": 1.0, "expectations": [{"text": "has-presigned-call: \u5305\u542b get_presigned_download_url \u6216 get_presigned_url \u8c03\u7528", "passed": true, "evidence": "\u5305\u542b\u9884\u7b7e\u540d URL \u8c03\u7528"}, {"text": "correct-expiry: \u6709\u6548\u671f\u8bbe\u7f6e\u4e3a 7200 \u79d2\uff082\u5c0f\u65f6\uff09", "passed": true, "evidence": "\u6709\u6548\u671f 7200 \u79d2"}, {"text": "force-download: \u8bbe\u7f6e Params \u6216 Headers \u5b9e\u73b0\u5f3a\u5236\u4e0b\u8f7d\uff08response-content-disposition \u6216 response-content-type\uff09", "passed": true, "evidence": "\u8bbe\u7f6e\u5f3a\u5236\u4e0b\u8f7d"}, {"text": "correct-bucket-key: Bucket \u548c Key \u8def\u5f84\u6b63\u786e", "passed": true, "evidence": "Bucket \u548c Key \u6b63\u786e"}, {"text": "client-init: \u5305\u542b\u5b8c\u6574\u7684\u5ba2\u6237\u7aef\u521d\u59cb\u5316", "passed": true, "evidence": "\u5305\u542b\u5ba2\u6237\u7aef\u521d\u59cb\u5316"}, {"text": "error-handling: \u5305\u542b try/except \u9519\u8bef\u5904\u7406", "passed": true, "evidence": "\u5305\u542b\u9519\u8bef\u5904\u7406"}]}}, {"id": "eval-5-without_skill", "prompt": "\u5e2e\u6211\u5728 Python \u91cc\u751f\u6210\u4e00\u4e2a COS \u6587\u4ef6\u7684\u9884\u7b7e\u540d\u4e0b\u8f7d URL\uff0c\u6587\u4ef6\u5728 my-bucket-1250000000 \u7684 private/reports/audit-2026.pdf\uff0c\u6709\u6548\u671f 2 \u5c0f\u65f6\u3002\u751f\u6210\u7684\u94fe\u63a5\u8981\u5f3a\u5236\u6d4f\u89c8\u5668\u4e0b\u8f7d\uff08\u800c\u4e0d\u662f\u9884\u89c8\uff09\u3002\u8bf7\u5199\u5b8c\u6574\u4ee3\u7801\u3002", "eval_id": 5, "outputs": [{"name": "presigned_url.py", "type": "text", "content": "\"\"\"\n\u817e\u8baf\u4e91 COS \u9884\u7b7e\u540d\u4e0b\u8f7d URL \u751f\u6210\u5de5\u5177\n\n\u529f\u80fd\uff1a\u4e3a COS \u4e2d\u7684\u6587\u4ef6\u751f\u6210\u5e26\u6709\u6548\u671f\u7684\u9884\u7b7e\u540d\u4e0b\u8f7d URL\uff0c\n      \u5e76\u901a\u8fc7 response-content-disposition \u53c2\u6570\u5f3a\u5236\u6d4f\u89c8\u5668\u4e0b\u8f7d\uff08\u800c\u975e\u9884\u89c8\uff09\u3002\n\"\"\"\n\nimport os\nimport sys\nfrom qcloud_cos import CosConfig, CosS3Client\n\n\ndef get_presigned_download_url(\n    bucket: str,\n    key: str,\n    expired: int = 7200,\n    region: str = \"ap-guangzhou\",\n    download_filename: str | None = None,\n) -> str:\n    \"\"\"\n    \u4e3a COS \u6587\u4ef6\u751f\u6210\u9884\u7b7e\u540d\u4e0b\u8f7d URL\uff0c\u5f3a\u5236\u6d4f\u89c8\u5668\u89e6\u53d1\u4e0b\u8f7d\u3002\n\n    Args:\n        bucket: \u5b58\u50a8\u6876\u540d\u79f0\uff0c\u683c\u5f0f\u4e3a <BucketName>-<APPID>\uff0c\u5982 my-bucket-1250000000\n        key:    COS \u4e2d\u7684\u5bf9\u8c61\u952e\uff08\u6587\u4ef6\u8def\u5f84\uff09\uff0c\u5982 private/reports/audit-2026.pdf\n        expired: \u7b7e\u540d\u6709\u6548\u671f\uff0c\u5355\u4f4d\u79d2\uff0c\u9ed8\u8ba4 7200\uff082 \u5c0f\u65f6\uff09\n        region: \u5b58\u50a8\u6876\u6240\u5728\u5730\u57df\uff0c\u9ed8\u8ba4 ap-guangzhou\n        download_filename: \u6d4f\u89c8\u5668\u4e0b\u8f7d\u65f6\u663e\u793a\u7684\u6587\u4ef6\u540d\uff0c\u9ed8\u8ba4\u4e3a key \u7684\u6587\u4ef6\u540d\u90e8\u5206\n\n    Returns:\n        \u9884\u7b7e\u540d\u4e0b\u8f7d URL \u5b57\u7b26\u4e32\n\n    Raises:\n        ValueError: \u7f3a\u5c11\u5fc5\u8981\u7684\u73af\u5883\u53d8\u91cf\u65f6\u629b\u51fa\n        CosClientError / CosServiceError: COS SDK \u5f02\u5e38\n    \"\"\"\n\n    # 1. \u4ece\u73af\u5883\u53d8\u91cf\u8bfb\u53d6\u5bc6\u94a5\n    secret_id = os.getenv(\"COS_SECRET_ID\")\n    secret_key = os.getenv(\"COS_SECRET_KEY\")\n\n    if not secret_id or not secret_key:\n        raise ValueError(\n            \"\u7f3a\u5c11\u5fc5\u8981\u7684\u73af\u5883\u53d8\u91cf\uff0c\u8bf7\u8bbe\u7f6e COS_SECRET_ID \u548c COS_SECRET_KEY\"\n        )\n\n    # 2. \u521d\u59cb\u5316 COS \u5ba2\u6237\u7aef\n    config = CosConfig(\n        Region=region,\n        SecretId=secret_id,\n        SecretKey=secret_key,\n    )\n    client = CosS3Client(config)\n\n    # 3. \u786e\u5b9a\u4e0b\u8f7d\u6587\u4ef6\u540d\n    if download_filename is None:\n        download_filename = os.path.basename(key)\n\n    # 4. \u6784\u9020\u5f3a\u5236\u4e0b\u8f7d\u53c2\u6570\n    params = {\n        \"response-content-disposition\": f'attachment; filename=\"{download_filename}\"',\n    }\n\n    # 5. \u751f\u6210\u9884\u7b7e\u540d URL\n    url = client.get_presigned_download_url(\n        Bucket=bucket,\n        Key=key,\n        Expired=expired,\n        Params=params,\n    )\n\n    return url\n\n\ndef main() -> None:\n    \"\"\"\u4e3b\u51fd\u6570\uff1a\u6f14\u793a\u5982\u4f55\u751f\u6210\u9884\u7b7e\u540d\u4e0b\u8f7d URL\u3002\"\"\"\n\n    # ======================== \u914d\u7f6e\u533a\u57df ========================\n    BUCKET = \"my-bucket-1250000000\"\n    KEY = \"private/reports/audit-2026.pdf\"\n    EXPIRED = 7200  # 2 \u5c0f\u65f6\n    REGION = \"ap-guangzhou\"\n    DOWNLOAD_FILENAME = \"audit-2026.pdf\"  # \u6d4f\u89c8\u5668\u4e0b\u8f7d\u65f6\u663e\u793a\u7684\u6587\u4ef6\u540d\n    # =========================================================\n\n    print(\"=\" * 60)\n    print(\"\u817e\u8baf\u4e91 COS \u9884\u7b7e\u540d\u4e0b\u8f7d URL \u751f\u6210\u5de5\u5177\")\n    print(\"=\" * 60)\n\n    try:\n        url = get_presigned_download_url(\n            bucket=BUCKET,\n            key=KEY,\n            expired=EXPIRED,\n            region=REGION,\n            download_filename=DOWNLOAD_FILENAME,\n        )\n\n        print(f\"\\n\u5b58\u50a8\u6876 : {BUCKET}\")\n        print(f\"\u6587\u4ef6\u8def\u5f84 : {KEY}\")\n        print(f\"\u6709\u6548\u671f : {EXPIRED} \u79d2\uff08{EXPIRED / 3600:.0f} \u5c0f\u65f6\uff09\")\n        print(f\"\u5f3a\u5236\u4e0b\u8f7d : \u662f\uff08Content-Disposition: attachment\uff09\")\n        print(f\"\\n\u9884\u7b7e\u540d URL\uff1a\\n{url}\\n\")\n\n    except ValueError as e:\n        print(f\"\\n[\u9519\u8bef] \u914d\u7f6e\u95ee\u9898\uff1a{e}\", file=sys.stderr)\n        print(\"\u8bf7\u786e\u4fdd\u5df2\u8bbe\u7f6e\u4ee5\u4e0b\u73af\u5883\u53d8\u91cf\uff1a\", file=sys.stderr)\n        print(\"  COS_SECRET_ID  - \u817e\u8baf\u4e91 SecretId\", file=sys.stderr)\n        print(\"  COS_SECRET_KEY - \u817e\u8baf\u4e91 SecretKey\", file=sys.stderr)\n        sys.exit(1)\n\n    except Exception as e:\n        print(f\"\\n[\u9519\u8bef] \u751f\u6210\u9884\u7b7e\u540d URL \u5931\u8d25\uff1a{e}\", file=sys.stderr)\n        sys.exit(1)\n\n\nif __name__ == \"__main__\":\n    main()\n"}], "grading": {"config": "without_skill", "total_assertions": 6, "passed": 6, "failed": 0, "pass_rate": 1.0, "expectations": [{"text": "has-presigned-call: \u5305\u542b get_presigned_download_url \u6216 get_presigned_url \u8c03\u7528", "passed": true, "evidence": "\u5305\u542b\u9884\u7b7e\u540d URL \u8c03\u7528"}, {"text": "correct-expiry: \u6709\u6548\u671f\u8bbe\u7f6e\u4e3a 7200 \u79d2\uff082\u5c0f\u65f6\uff09", "passed": true, "evidence": "\u6709\u6548\u671f 7200 \u79d2"}, {"text": "force-download: \u8bbe\u7f6e Params \u6216 Headers \u5b9e\u73b0\u5f3a\u5236\u4e0b\u8f7d\uff08response-content-disposition \u6216 response-content-type\uff09", "passed": true, "evidence": "\u8bbe\u7f6e\u5f3a\u5236\u4e0b\u8f7d"}, {"text": "correct-bucket-key: Bucket \u548c Key \u8def\u5f84\u6b63\u786e", "passed": true, "evidence": "Bucket \u548c Key \u6b63\u786e"}, {"text": "client-init: \u5305\u542b\u5b8c\u6574\u7684\u5ba2\u6237\u7aef\u521d\u59cb\u5316", "passed": true, "evidence": "\u5305\u542b\u5ba2\u6237\u7aef\u521d\u59cb\u5316"}, {"text": "error-handling: \u5305\u542b try/except \u9519\u8bef\u5904\u7406", "passed": true, "evidence": "\u5305\u542b\u9519\u8bef\u5904\u7406"}]}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"skill_name": "tencent-cos", "iteration": 1, "configs": [{"name": "with_skill", "pass_rate_mean": 0.95, "pass_rate_stddev": 0.06, "time_mean_seconds": 73.0, "time_stddev_seconds": 10.7, "tokens_mean": 44500, "tokens_stddev": 2400, "evals": [{"eval_id": 1, "eval_name": "upload-file", "pass_rate": 0.88, "time_seconds": 72.5, "tokens": 43590}, {"eval_id": 2, "eval_name": "download-file", "pass_rate": 1.0, "time_seconds": 84.7, "tokens": 44783}, {"eval_id": 3, "eval_name": "list-objects", "pass_rate": 0.88, "time_seconds": 75.1, "tokens": 48184}, {"eval_id": 4, "eval_name": "create-bucket", "pass_rate": 1.0, "time_seconds": 74.8, "tokens": 45637}, {"eval_id": 5, "eval_name": "presigned-url", "pass_rate": 1.0, "time_seconds": 57.9, "tokens": 43097}]}, {"name": "without_skill", "pass_rate_mean": 0.95, "pass_rate_stddev": 0.06, "time_mean_seconds": 75.3, "time_stddev_seconds": 15.6, "tokens_mean": 40900, "tokens_stddev": 1400, "evals": [{"eval_id": 1, "eval_name": "upload-file", "pass_rate": 0.88, "time_seconds": 93.3, "tokens": 43016}, {"eval_id": 2, "eval_name": "download-file", "pass_rate": 1.0, "time_seconds": 63.3, "tokens": 41034}, {"eval_id": 3, "eval_name": "list-objects", "pass_rate": 0.88, "time_seconds": 97.6, "tokens": 41807}, {"eval_id": 4, "eval_name": "create-bucket", "pass_rate": 1.0, "time_seconds": 67.1, "tokens": 39958}, {"eval_id": 5, "eval_name": "presigned-url", "pass_rate": 1.0, "time_seconds": 55.2, "tokens": 38960}]}], "comparison": {"with_skill_vs_without_skill": {"pass_rate_delta": 0.0, "pass_rate_delta_pct": "0%", "time_delta_seconds": -2.3, "time_delta_pct": "-3%", "tokens_delta": 3600, "tokens_delta_pct": "+9%"}}, "notes": "\u9996\u6b21\u8fed\u4ee3\u3002with_skill \u548c without_skill \u5728 pass_rate \u4e0a\u8868\u73b0\u4e00\u81f4\uff0895%\uff09\uff0c\u65ad\u8a00\u5931\u8d25\u4e3b\u8981\u6765\u81ea\u8bc4\u5206\u811a\u672c\u7684\u5b57\u7b26\u4e32\u5339\u914d\u4e25\u683c\u5ea6\uff08\u5982 ContentType \u7684\u53d8\u4f53\u5199\u6cd5\u3001Bucket \u540d\u4f7f\u7528\u53d8\u91cf\u4f20\u9012\uff09\u3002with_skill \u751f\u6210\u7684\u4ee3\u7801\u5e73\u5747\u5feb 2.3 \u79d2\uff0c\u4f46 token \u6d88\u8017\u591a 9%\u3002\u4e24\u4e2a\u7248\u672c\u90fd\u751f\u6210\u4e86\u9ad8\u8d28\u91cf\u7684\u529f\u80fd\u4ee3\u7801\u3002"}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

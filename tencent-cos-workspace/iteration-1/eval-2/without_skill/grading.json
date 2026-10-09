@@ -1,0 +1,49 @@
+{
+  "config": "without_skill",
+  "total_assertions": 8,
+  "passed": 8,
+  "failed": 0,
+  "pass_rate": 1.0,
+  "expectations": [
+    {
+      "text": "has-head-object: 使用 head_object 先检查文件大小",
+      "passed": true,
+      "evidence": "使用 head_object 检查文件"
+    },
+    {
+      "text": "size-check-logic: 包含文件大小判断逻辑（与 1GB 比较）",
+      "passed": true,
+      "evidence": "检查文件大小"
+    },
+    {
+      "text": "range-download: 超过 1GB 时使用 Range 参数进行范围下载",
+      "passed": true,
+      "evidence": "使用 Range 参数"
+    },
+    {
+      "text": "correct-range-bytes: Range 设置为 bytes=0-536870911（前 512MB）",
+      "passed": true,
+      "evidence": "包含 512MB 范围"
+    },
+    {
+      "text": "save-to-file: 使用 get_stream_to_file 保存到本地路径",
+      "passed": true,
+      "evidence": "保存到本地文件"
+    },
+    {
+      "text": "correct-downloads-dir: 保存到 ./downloads/ 目录",
+      "passed": true,
+      "evidence": "保存到 downloads 目录"
+    },
+    {
+      "text": "client-init: 包含完整的客户端初始化",
+      "passed": true,
+      "evidence": "包含客户端初始化"
+    },
+    {
+      "text": "error-handling: 包含 try/except 错误处理",
+      "passed": true,
+      "evidence": "包含错误处理"
+    }
+  ]
+}

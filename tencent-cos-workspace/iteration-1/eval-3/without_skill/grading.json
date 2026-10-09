@@ -1,0 +1,49 @@
+{
+  "config": "without_skill",
+  "total_assertions": 8,
+  "passed": 7,
+  "failed": 1,
+  "pass_rate": 0.88,
+  "expectations": [
+    {
+      "text": "has-list-objects: 包含 list_objects 调用",
+      "passed": true,
+      "evidence": "包含 list_objects 调用"
+    },
+    {
+      "text": "prefix-filter: 使用 Prefix='images/' 过滤对象",
+      "passed": true,
+      "evidence": "使用 Prefix 过滤"
+    },
+    {
+      "text": "pagination-loop: 包含分页循环（while 循环 + Marker 机制）",
+      "passed": true,
+      "evidence": "包含分页循环"
+    },
+    {
+      "text": "is-truncated-check: 检查 IsTruncated 判断是否还有更多数据",
+      "passed": true,
+      "evidence": "检查 IsTruncated"
+    },
+    {
+      "text": "prints-key-size: 打印每个对象的 Key 和 Size",
+      "passed": true,
+      "evidence": "打印 Key 和 Size"
+    },
+    {
+      "text": "correct-bucket: Bucket 参数正确：media-assets-1250000000",
+      "passed": false,
+      "evidence": "未找到正确的 Bucket 名称"
+    },
+    {
+      "text": "client-init: 包含完整的客户端初始化",
+      "passed": true,
+      "evidence": "包含客户端初始化"
+    },
+    {
+      "text": "wrapped-in-function: 代码包装在函数中便于复用",
+      "passed": true,
+      "evidence": "代码包装在函数中"
+    }
+  ]
+}

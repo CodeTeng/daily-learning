@@ -1,0 +1,13 @@
+{
+  "eval_id": 5,
+  "eval_name": "presigned-url",
+  "prompt": "帮我在 Python 里生成一个 COS 文件的预签名下载 URL，文件在 my-bucket-1250000000 的 private/reports/audit-2026.pdf，有效期 2 小时。生成的链接要强制浏览器下载（而不是预览）。请写完整代码。",
+  "assertions": [
+    {"id": "has-presigned-call", "description": "包含 get_presigned_download_url 或 get_presigned_url 调用"},
+    {"id": "correct-expiry", "description": "有效期设置为 7200 秒（2小时）"},
+    {"id": "force-download", "description": "设置 Params 或 Headers 实现强制下载（response-content-disposition 或 response-content-type）"},
+    {"id": "correct-bucket-key", "description": "Bucket 和 Key 路径正确"},
+    {"id": "client-init", "description": "包含完整的客户端初始化"},
+    {"id": "error-handling", "description": "包含 try/except 错误处理"}
+  ]
+}

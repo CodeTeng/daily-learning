@@ -1,0 +1,14 @@
+{
+  "eval_id": 4,
+  "eval_name": "create-bucket",
+  "prompt": "我要在腾讯云 COS 上创建一个新的存储桶 my-app-static-1250000000，地域是 ap-shanghai，访问权限设为 public-read（用于静态网站托管）。创建完后帮我检查一下桶是否成功创建。请写 Python 代码。",
+  "assertions": [
+    {"id": "has-create-bucket", "description": "包含 create_bucket 调用"},
+    {"id": "correct-bucket-name", "description": "Bucket 名称正确：my-app-static-1250000000"},
+    {"id": "acl-public-read", "description": "设置了 ACL='public-read' 访问权限"},
+    {"id": "has-head-bucket", "description": "使用 head_bucket 验证创建结果"},
+    {"id": "create-then-verify", "description": "先创建再验证的逻辑顺序正确"},
+    {"id": "client-init", "description": "包含完整的客户端初始化"},
+    {"id": "error-handling", "description": "包含 try/except 错误处理或状态码检查"}
+  ]
+}

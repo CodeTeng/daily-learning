@@ -1,0 +1,44 @@
+{
+  "config": "without_skill",
+  "total_assertions": 7,
+  "passed": 7,
+  "failed": 0,
+  "pass_rate": 1.0,
+  "expectations": [
+    {
+      "text": "has-create-bucket: 包含 create_bucket 调用",
+      "passed": true,
+      "evidence": "包含 create_bucket 调用"
+    },
+    {
+      "text": "correct-bucket-name: Bucket 名称正确：my-app-static-1250000000",
+      "passed": true,
+      "evidence": "Bucket 名称正确"
+    },
+    {
+      "text": "acl-public-read: 设置了 ACL='public-read' 访问权限",
+      "passed": true,
+      "evidence": "设置了 public-read ACL"
+    },
+    {
+      "text": "has-head-bucket: 使用 head_bucket 验证创建结果",
+      "passed": true,
+      "evidence": "包含 head_bucket 验证"
+    },
+    {
+      "text": "create-then-verify: 先创建再验证的逻辑顺序正确",
+      "passed": true,
+      "evidence": "创建 + 验证逻辑完整"
+    },
+    {
+      "text": "client-init: 包含完整的客户端初始化",
+      "passed": true,
+      "evidence": "包含客户端初始化"
+    },
+    {
+      "text": "error-handling: 包含 try/except 错误处理或状态码检查",
+      "passed": true,
+      "evidence": "包含错误处理"
+    }
+  ]
+}

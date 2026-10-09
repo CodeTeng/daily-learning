@@ -1,0 +1,82 @@
+{
+  "skill_name": "tencent-cos",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我把本地的 ./data/sales-report-2026Q3.xlsx 文件上传到腾讯云 COS 存储桶 my-data-1250000000 的 reports/ 目录下，上传时需要设置 ContentType 为 application/vnd.openxmlformats-officedocument.spreadsheetml.sheet，并且开启 MD5 校验。请写出完整的 Python 代码。",
+      "expected_output": "生成正确的 put_object_from_local_file 或 put_object 上传代码，包含 Bucket、LocalFilePath、Key、ContentType、EnableMD5 参数",
+      "files": [],
+      "assertions": [
+        {"id": "has-upload-call", "description": "包含 put_object_from_local_file 或 put_object 上传调用"},
+        {"id": "correct-bucket", "description": "Bucket 参数正确：my-data-1250000000"},
+        {"id": "correct-key", "description": "Key 路径正确，包含 reports/ 目录和文件名"},
+        {"id": "content-type-set", "description": "设置了 ContentType 为 xlsx MIME 类型"},
+        {"id": "md5-enabled", "description": "开启了 EnableMD5=True 校验"},
+        {"id": "client-init", "description": "包含完整的客户端初始化（CosConfig + CosS3Client）"},
+        {"id": "env-config", "description": "从环境变量或 .env 文件读取密钥配置"},
+        {"id": "error-handling", "description": "包含 try/except 错误处理（CosServiceError 或 CosClientError）"}
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "我需要从腾讯云 COS 的存储桶 data-backup-1250000000 中下载 backups/db-2026-07-25.tar.gz 文件，保存到本地的 ./downloads/ 目录。如果文件超过 1GB，只需要下载前 512MB 进行校验就行。请写出 Python 代码。",
+      "expected_output": "生成正确的 get_object 下载代码，包含范围下载逻辑（Range 参数），使用 get_stream_to_file 保存",
+      "files": [],
+      "assertions": [
+        {"id": "has-head-object", "description": "使用 head_object 先检查文件大小"},
+        {"id": "size-check-logic", "description": "包含文件大小判断逻辑（与 1GB 比较）"},
+        {"id": "range-download", "description": "超过 1GB 时使用 Range 参数进行范围下载"},
+        {"id": "correct-range-bytes", "description": "Range 设置为 bytes=0-536870911（前 512MB）"},
+        {"id": "save-to-file", "description": "使用 get_stream_to_file 保存到本地路径"},
+        {"id": "correct-downloads-dir", "description": "保存到 ./downloads/ 目录"},
+        {"id": "client-init", "description": "包含完整的客户端初始化"},
+        {"id": "error-handling", "description": "包含 try/except 错误处理"}
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "帮我写一个 Python 函数，遍历 COS 存储桶 media-assets-1250000000 中 images/ 前缀下的所有文件，把文件名和文件大小打印出来，并且能处理分页（万一文件超过 1000 个）。",
+      "expected_output": "生成正确的 list_objects 分页遍历代码，使用 Marker 分页，打印 Key 和 Size",
+      "files": [],
+      "assertions": [
+        {"id": "has-list-objects", "description": "包含 list_objects 调用"},
+        {"id": "prefix-filter", "description": "使用 Prefix='images/' 过滤对象"},
+        {"id": "pagination-loop", "description": "包含分页循环（while 循环 + Marker 机制）"},
+        {"id": "is-truncated-check", "description": "检查 IsTruncated 判断是否还有更多数据"},
+        {"id": "prints-key-size", "description": "打印每个对象的 Key 和 Size"},
+        {"id": "correct-bucket", "description": "Bucket 参数正确：media-assets-1250000000"},
+        {"id": "client-init", "description": "包含完整的客户端初始化"},
+        {"id": "wrapped-in-function", "description": "代码包装在函数中便于复用"}
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "我要在腾讯云 COS 上创建一个新的存储桶 my-app-static-1250000000，地域是 ap-shanghai，访问权限设为 public-read（用于静态网站托管）。创建完后帮我检查一下桶是否成功创建。请写 Python 代码。",
+      "expected_output": "生成 create_bucket 代码，指定 ACL=public-read，包含 head_bucket 检查逻辑",
+      "files": [],
+      "assertions": [
+        {"id": "has-create-bucket", "description": "包含 create_bucket 调用"},
+        {"id": "correct-bucket-name", "description": "Bucket 名称正确：my-app-static-1250000000"},
+        {"id": "acl-public-read", "description": "设置了 ACL='public-read' 访问权限"},
+        {"id": "has-head-bucket", "description": "使用 head_bucket 验证创建结果"},
+        {"id": "create-then-verify", "description": "先创建再验证的逻辑顺序正确"},
+        {"id": "client-init", "description": "包含完整的客户端初始化"},
+        {"id": "error-handling", "description": "包含 try/except 错误处理或状态码检查"}
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "帮我在 Python 里生成一个 COS 文件的预签名下载 URL，文件在 my-bucket-1250000000 的 private/reports/audit-2026.pdf，有效期 2 小时。生成的链接要强制浏览器下载（而不是预览）。请写完整代码。",
+      "expected_output": "生成 get_presigned_download_url 代码，包含 Params 中 response-content-type 设置以强制下载",
+      "files": [],
+      "assertions": [
+        {"id": "has-presigned-call", "description": "包含 get_presigned_download_url 或 get_presigned_url 调用"},
+        {"id": "correct-expiry", "description": "有效期设置为 7200 秒（2小时）"},
+        {"id": "force-download", "description": "设置 Params 或 Headers 实现强制下载（response-content-disposition 或 response-content-type）"},
+        {"id": "correct-bucket-key", "description": "Bucket 和 Key 路径正确"},
+        {"id": "client-init", "description": "包含完整的客户端初始化"},
+        {"id": "error-handling", "description": "包含 try/except 错误处理"}
+      ]
+    }
+  ]
+}

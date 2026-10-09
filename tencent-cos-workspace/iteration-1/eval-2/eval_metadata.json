@@ -1,0 +1,15 @@
+{
+  "eval_id": 2,
+  "eval_name": "download-file",
+  "prompt": "我需要从腾讯云 COS 的存储桶 data-backup-1250000000 中下载 backups/db-2026-07-25.tar.gz 文件，保存到本地的 ./downloads/ 目录。如果文件超过 1GB，只需要下载前 512MB 进行校验就行。请写出 Python 代码。",
+  "assertions": [
+    {"id": "has-head-object", "description": "使用 head_object 先检查文件大小"},
+    {"id": "size-check-logic", "description": "包含文件大小判断逻辑（与 1GB 比较）"},
+    {"id": "range-download", "description": "超过 1GB 时使用 Range 参数进行范围下载"},
+    {"id": "correct-range-bytes", "description": "Range 设置为 bytes=0-536870911（前 512MB）"},
+    {"id": "save-to-file", "description": "使用 get_stream_to_file 保存到本地路径"},
+    {"id": "correct-downloads-dir", "description": "保存到 ./downloads/ 目录"},
+    {"id": "client-init", "description": "包含完整的客户端初始化"},
+    {"id": "error-handling", "description": "包含 try/except 错误处理"}
+  ]
+}

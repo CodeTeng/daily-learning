@@ -1,0 +1,39 @@
+{
+  "config": "without_skill",
+  "total_assertions": 6,
+  "passed": 6,
+  "failed": 0,
+  "pass_rate": 1.0,
+  "expectations": [
+    {
+      "text": "has-presigned-call: 包含 get_presigned_download_url 或 get_presigned_url 调用",
+      "passed": true,
+      "evidence": "包含预签名 URL 调用"
+    },
+    {
+      "text": "correct-expiry: 有效期设置为 7200 秒（2小时）",
+      "passed": true,
+      "evidence": "有效期 7200 秒"
+    },
+    {
+      "text": "force-download: 设置 Params 或 Headers 实现强制下载（response-content-disposition 或 response-content-type）",
+      "passed": true,
+      "evidence": "设置强制下载"
+    },
+    {
+      "text": "correct-bucket-key: Bucket 和 Key 路径正确",
+      "passed": true,
+      "evidence": "Bucket 和 Key 正确"
+    },
+    {
+      "text": "client-init: 包含完整的客户端初始化",
+      "passed": true,
+      "evidence": "包含客户端初始化"
+    },
+    {
+      "text": "error-handling: 包含 try/except 错误处理",
+      "passed": true,
+      "evidence": "包含错误处理"
+    }
+  ]
+}

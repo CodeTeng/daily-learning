@@ -1,0 +1,15 @@
+{
+  "eval_id": 1,
+  "eval_name": "upload-file",
+  "prompt": "帮我把本地的 ./data/sales-report-2026Q3.xlsx 文件上传到腾讯云 COS 存储桶 my-data-1250000000 的 reports/ 目录下，上传时需要设置 ContentType 为 application/vnd.openxmlformats-officedocument.spreadsheetml.sheet，并且开启 MD5 校验。请写出完整的 Python 代码。",
+  "assertions": [
+    {"id": "has-upload-call", "description": "包含 put_object_from_local_file 或 put_object 上传调用"},
+    {"id": "correct-bucket", "description": "Bucket 参数正确：my-data-1250000000"},
+    {"id": "correct-key", "description": "Key 路径正确，包含 reports/ 目录和文件名"},
+    {"id": "content-type-set", "description": "设置了 ContentType 为 xlsx MIME 类型"},
+    {"id": "md5-enabled", "description": "开启了 EnableMD5=True 校验"},
+    {"id": "client-init", "description": "包含完整的客户端初始化（CosConfig + CosS3Client）"},
+    {"id": "env-config", "description": "从环境变量或 .env 文件读取密钥配置"},
+    {"id": "error-handling", "description": "包含 try/except 错误处理（CosServiceError 或 CosClientError）"}
+  ]
+}
